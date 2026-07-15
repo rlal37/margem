@@ -18,13 +18,25 @@ import { useKeyboardShortcuts } from '../accessibility'
 import { ShortcutHelp } from '../ui/ShortcutHelp'
 import type { Annotation, Comment } from '../domain/types'
 import { useEditor } from './editorContext'
+import { useAutosave, type SaveStatus } from './useAutosave'
 import './EditorShell.css'
 
-export function EditorShell() {
+const SAVE_LABEL: Record<SaveStatus, string> = {
+  saving: 'Salvando…',
+  saved: 'Salvo neste navegador',
+  error: 'Falha ao salvar. Baixe uma cópia.',
+}
+
+interface EditorShellProps {
+  onNewProject(): void
+}
+
+export function EditorShell({ onNewProject }: EditorShellProps) {
   const { project, tool, selectedId, canUndo, canRedo, store } = useEditor()
   const canvasRef = useRef<CanvasViewportHandle>(null)
   const textInputRef = useRef<HTMLInputElement>(null)
   const [helpOpen, setHelpOpen] = useState(false)
+  const saveStatus = useAutosave(store)
 
   const imageSize = { width: project.image.width, height: project.image.height }
   const tools = useCanvasTools(store, project, imageSize, project.viewport.zoom)
@@ -69,8 +81,20 @@ export function EditorShell() {
   return (
     <div className="editor">
       <header className="editor__bar">
-        <span className="editor__title">{project.image.originalName}</span>
+        <div className="editor__meta">
+          <span className="editor__title">{project.image.originalName}</span>
+          <span
+            className={`editor__save editor__save--${saveStatus}`}
+            role="status"
+            aria-live="polite"
+          >
+            {SAVE_LABEL[saveStatus]}
+          </span>
+        </div>
         <div className="editor__actions">
+          <button type="button" onClick={onNewProject} title="Novo projeto">
+            Novo projeto
+          </button>
           <div role="group" aria-label="Histórico">
             <button
               type="button"

@@ -1,16 +1,41 @@
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import './App.css'
 import { EditorProvider } from './app/EditorProvider'
 import { EditorShell } from './app/EditorShell'
 import { createProject } from './domain/factories'
 import { loadImageAsset } from './editor/canvas'
-import type { ImageAsset } from './domain/types'
+import {
+  clearCurrentProject,
+  hasCurrentProject,
+  loadCurrentProject,
+  saveImage,
+  saveProjectData,
+} from './storage'
+import { ConfirmDialog } from './ui/ConfirmDialog'
+import type { Project } from './domain/types'
+
+type Phase = 'loading' | 'empty' | 'recovery' | 'editing'
 
 function App() {
-  const [image, setImage] = useState<ImageAsset | null>(null)
+  const [phase, setPhase] = useState<Phase>('loading')
+  const [project, setProject] = useState<Project | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [confirmNew, setConfirmNew] = useState(false)
 
-  const project = useMemo(() => (image ? createProject(image) : null), [image])
+  // Na abertura, verifica se há um projeto recuperável (RF-054, seção 7.6).
+  useEffect(() => {
+    let cancelled = false
+    hasCurrentProject()
+      .then((has) => {
+        if (!cancelled) setPhase(has ? 'recovery' : 'empty')
+      })
+      .catch(() => {
+        if (!cancelled) setPhase('empty')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function handleFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -18,53 +43,137 @@ function App() {
     if (!file) return
 
     const result = await loadImageAsset(file)
-    if (result.ok) {
-      setError(null)
-      setImage(result.asset)
-    } else {
+    if (!result.ok) {
       setError(result.error)
+      return
+    }
+
+    const created = createProject(result.asset)
+    // Falha de persistência não impede editar em memória (RNF-004).
+    try {
+      await saveImage(file)
+      await saveProjectData(created)
+    } catch {
+      /* segue em memória; o autosave tentará novamente */
+    }
+    setError(null)
+    setProject(created)
+    setPhase('editing')
+  }
+
+  async function continueRecovery() {
+    const loaded = await loadCurrentProject()
+    if (loaded) {
+      setProject(loaded.project)
+      setPhase('editing')
+    } else {
+      setPhase('empty')
     }
   }
 
-  if (!project) {
+  function revokeCurrentImage() {
+    if (project?.image.source.startsWith('blob:')) {
+      URL.revokeObjectURL(project.image.source)
+    }
+  }
+
+  async function confirmStartNew() {
+    revokeCurrentImage()
+    await clearCurrentProject()
+    setProject(null)
+    setConfirmNew(false)
+    setPhase('empty')
+  }
+
+  if (phase === 'loading') {
+    return <main className="empty-state" aria-busy="true" />
+  }
+
+  if (phase === 'editing' && project) {
+    return (
+      <>
+        <EditorProvider project={project}>
+          <EditorShell onNewProject={() => setConfirmNew(true)} />
+        </EditorProvider>
+        <ConfirmDialog
+          open={confirmNew}
+          title="Começar de novo?"
+          message="Começar de novo apaga o projeto salvo neste navegador. Baixe uma cópia antes, se precisar."
+          confirmLabel="Começar novo"
+          onConfirm={confirmStartNew}
+          onCancel={() => setConfirmNew(false)}
+        />
+      </>
+    )
+  }
+
+  if (phase === 'recovery') {
     return (
       <main className="empty-state">
         <div className="empty-state__card">
           <h1 className="empty-state__title">
-            Traga uma imagem para a margem.
+            Há um projeto salvo neste navegador.
           </h1>
-          <p className="empty-state__hint">
-            Cole, arraste ou escolha um arquivo PNG, JPEG ou WebP.
-          </p>
-
-          <label className="empty-state__button">
-            Escolher imagem
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleFile}
-              className="empty-state__input"
-            />
-          </label>
-
-          {error && (
-            <p role="alert" className="empty-state__error">
-              {error}
-            </p>
-          )}
-
-          <p className="empty-state__privacy">
-            A imagem e as anotações ficam neste navegador.
-          </p>
+          <p className="empty-state__hint">Continuar de onde parou?</p>
+          <div className="empty-state__choices">
+            <button
+              type="button"
+              className="empty-state__button"
+              onClick={continueRecovery}
+            >
+              Continuar projeto
+            </button>
+            <button
+              type="button"
+              className="empty-state__link"
+              onClick={() => setConfirmNew(true)}
+            >
+              Começar novo
+            </button>
+          </div>
         </div>
+        <ConfirmDialog
+          open={confirmNew}
+          title="Começar de novo?"
+          message="Começar de novo apaga o projeto salvo neste navegador. Baixe uma cópia antes, se precisar."
+          confirmLabel="Começar novo"
+          onConfirm={confirmStartNew}
+          onCancel={() => setConfirmNew(false)}
+        />
       </main>
     )
   }
 
+  // phase === 'empty'
   return (
-    <EditorProvider project={project}>
-      <EditorShell />
-    </EditorProvider>
+    <main className="empty-state">
+      <div className="empty-state__card">
+        <h1 className="empty-state__title">Traga uma imagem para a margem.</h1>
+        <p className="empty-state__hint">
+          Cole, arraste ou escolha um arquivo PNG, JPEG ou WebP.
+        </p>
+
+        <label className="empty-state__button">
+          Escolher imagem
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={handleFile}
+            className="empty-state__input"
+          />
+        </label>
+
+        {error && (
+          <p role="alert" className="empty-state__error">
+            {error}
+          </p>
+        )}
+
+        <p className="empty-state__privacy">
+          A imagem e as anotações ficam neste navegador.
+        </p>
+      </div>
+    </main>
   )
 }
 
