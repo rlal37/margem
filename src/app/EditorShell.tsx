@@ -15,7 +15,8 @@ import {
   type CanvasViewportHandle,
 } from '../editor/canvas'
 import { ToolRail, useCanvasTools } from '../editor/tools'
-import type { Annotation } from '../domain/types'
+import { CommentsPanel } from '../editor/comments'
+import type { Annotation, Comment } from '../domain/types'
 import { useEditor } from './editorContext'
 import './EditorShell.css'
 
@@ -76,6 +77,17 @@ export function EditorShell() {
   const textScreen = tools.textEditor
     ? imageToScreen(project.viewport, tools.textEditor.imagePoint)
     : null
+
+  // Selecionar um comentário seleciona e enquadra o marcador (RF-044).
+  function focusComment(comment: Comment) {
+    const markerId = comment.markerAnnotationId
+    if (!markerId) return
+    store.select(markerId)
+    const marker = project.annotations.find((a) => a.id === markerId)
+    if (marker && marker.type === 'marker') {
+      canvasRef.current?.centerOn(marker.geometry.point)
+    }
+  }
 
   return (
     <div className="editor">
@@ -176,6 +188,17 @@ export function EditorShell() {
             />
           )}
         </main>
+
+        <CommentsPanel
+          comments={project.comments}
+          activeMarkerId={selectedId}
+          onUpdate={(c) => store.updateComment(c)}
+          onReorder={(ids) => store.reorderComments(ids)}
+          onDelete={(c) =>
+            c.markerAnnotationId && store.deleteAnnotation(c.markerAnnotationId)
+          }
+          onFocus={focusComment}
+        />
       </div>
     </div>
   )

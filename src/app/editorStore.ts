@@ -11,9 +11,11 @@ import { ProjectHistory } from '../editor/history/command'
 import {
   RemoveAnnotationCommand,
   RemoveMarkerCommand,
+  ReorderCommentsCommand,
+  UpdateCommentCommand,
 } from '../editor/history/commands'
 import type { Command } from '../editor/history/command'
-import type { Project, ToolId, Viewport } from '../domain/types'
+import type { Comment, Project, ToolId, Viewport } from '../domain/types'
 
 export interface EditorSnapshot {
   project: Project
@@ -92,13 +94,23 @@ export class EditorStore {
     this.emit()
   }
 
+  /** Edita um comentário (título, descrição, categoria — RF-041, RF-042). */
+  updateComment(next: Comment): void {
+    this.history.execute(new UpdateCommentCommand(next))
+    this.emit()
+  }
+
+  /** Reordena comentários e renumera marcadores (RF-043). */
+  reorderComments(orderedIds: readonly string[]): void {
+    this.history.execute(new ReorderCommentsCommand(orderedIds))
+    this.emit()
+  }
+
   /**
-   * Exclui a anotação selecionada de forma reversível (RF-047 para marcador
-   * com comentário; RF-050 para as demais).
+   * Exclui uma anotação de forma reversível (RF-047 para marcador com
+   * comentário; RF-050 para as demais). Limpa a seleção se era o objeto.
    */
-  deleteSelected(): void {
-    const id = this.selectedId
-    if (id === null) return
+  deleteAnnotation(id: string): void {
     const annotation = this.history.state.annotations.find((a) => a.id === id)
     if (!annotation) return
     const command: Command =
@@ -106,8 +118,12 @@ export class EditorStore {
         ? new RemoveMarkerCommand(id)
         : new RemoveAnnotationCommand(id)
     this.history.execute(command)
-    this.selectedId = null
+    if (this.selectedId === id) this.selectedId = null
     this.emit()
+  }
+
+  deleteSelected(): void {
+    if (this.selectedId !== null) this.deleteAnnotation(this.selectedId)
   }
 
   /** Limpa a seleção se o objeto não existe mais (após undo/redo). */

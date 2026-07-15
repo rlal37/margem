@@ -41,6 +41,8 @@ export interface CanvasViewportHandle {
   zoomOut(): void
   fit(): void
   actual(): void
+  /** Centraliza um ponto normalizado da imagem, preservando o zoom. */
+  centerOn(point: { x: number; y: number }): void
 }
 
 interface CanvasViewportProps {
@@ -151,6 +153,15 @@ export const CanvasViewport = forwardRef<
         ),
       fit: () => emit(fitViewport(imageSize, size), 'fit'),
       actual: () => emit(actualViewport(imageSize, size), 'actual'),
+      centerOn: (point) =>
+        emit(
+          {
+            zoom: viewport.zoom,
+            panX: size.width / 2 - point.x * imageSize.width * viewport.zoom,
+            panY: size.height / 2 - point.y * imageSize.height * viewport.zoom,
+          },
+          'actual',
+        ),
     }),
     [viewport, size, imageSize, focalCenter, emit],
   )

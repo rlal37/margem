@@ -4,6 +4,7 @@ import {
   createMarkerWithComment,
   createProject,
 } from '../domain/factories'
+import { markerNumber } from '../domain/numbering'
 import type { ImageAsset } from '../domain/types'
 import {
   AddAnnotationCommand,
@@ -88,5 +89,43 @@ describe('EditorStore', () => {
     s.select('a1')
     s.undo()
     expect(s.getSnapshot().selectedId).toBeNull()
+  })
+
+  it('edita comentário de forma reversível (RF-041/042)', () => {
+    const s = store()
+    const { annotation, comment } = createMarkerWithComment(
+      { x: 0.5, y: 0.5 },
+      { id: 'm1', order: 1 },
+    )
+    s.execute(new AddMarkerCommand(annotation, comment))
+
+    s.updateComment({
+      ...comment,
+      title: 'Ação principal',
+      category: 'problema',
+    })
+    expect(s.getSnapshot().project.comments[0]?.title).toBe('Ação principal')
+
+    s.undo()
+    expect(s.getSnapshot().project.comments[0]?.title).toBe('')
+  })
+
+  it('reordena comentários e renumera marcadores (RF-043)', () => {
+    const s = store()
+    const first = createMarkerWithComment(
+      { x: 0.1, y: 0.1 },
+      { id: 'm1', order: 1 },
+    )
+    const second = createMarkerWithComment(
+      { x: 0.2, y: 0.2 },
+      { id: 'm2', order: 2 },
+    )
+    s.execute(new AddMarkerCommand(first.annotation, first.comment))
+    s.execute(new AddMarkerCommand(second.annotation, second.comment))
+
+    s.reorderComments([second.comment.id, first.comment.id])
+    const comments = s.getSnapshot().project.comments
+    expect(markerNumber(second.annotation, comments)).toBe(1)
+    expect(markerNumber(first.annotation, comments)).toBe(2)
   })
 })
