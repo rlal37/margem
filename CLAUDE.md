@@ -70,14 +70,15 @@ tests/
 
 ## Estado atual (2026-07-15)
 
-**WP-01 a WP-09 concluídos, verificados e no ar.** Repositório
+**WP-01 a WP-10 concluídos, verificados e no ar.** Repositório
 `rlal37/margem` (branch `master`), publicado por GitHub Actions em
 `https://rlal37.github.io/margem/`. CI roda lint + format:check + test +
-build + e2e; deploy automático no push. **Próximo: WP-10 Identidade e
-conteúdo** (fechar paleta/tamanhos provisórios, microcopy, Sobre).
+build + e2e; deploy automático no push. **Próximo: WP-11 QA e lançamento**
+(cross-browser, performance, checklist do Apêndice D).
 
-O fluxo principal do MVP funciona ponta a ponta: importar imagem (seletor de
-arquivo) → anotar (marcador/área/seta/desenho/texto) → comentar → autosave →
+O fluxo principal do MVP funciona ponta a ponta: importar imagem (escolher,
+colar ou arrastar) → anotar (marcador/área/seta/desenho/texto) → comentar →
+categorizar (símbolo+cor do marcador) → editar propriedades → autosave →
 recuperar sessão → exportar PNG/Markdown/`.margem` → reimportar `.margem`.
 
 ### Arquitetura como construída (pontos de entrada)
@@ -116,8 +117,20 @@ recuperar sessão → exportar PNG/Markdown/`.margem` → reimportar `.margem`.
   sincronizada ao canvas (seção 12.2); `CanvasViewport` é focável
   (`role="application"`), setas movem a seleção (`store.nudgeSelected`) e
   Espaço-hold faz pan.
-- `src/App.tsx` — fases loading/empty/recovery/editing; `EditorShell.tsx` —
-  barra + zonas; painel lateral (`.editor__side`) empilha ObjectList + Comments.
+- `src/domain/appearance.ts` — aparência do marcador dirigida pela categoria
+  (`markerAppearance`: símbolo+cor via `CATEGORY_APPEARANCE`; neutro sem
+  categoria), `symbolPolygon` (compartilhado SVG+PNG) e `readableInk`
+  (contraste WCAG do número). `AnnotationLayer`/`pngExport` desenham o símbolo.
+- `src/editor/properties/PropertiesPanel.tsx` — ao selecionar objeto livre, o
+  painel troca de comentários para propriedades (cor/espessura/opacidade/ponta/
+  tamanho de texto/alinhamento + posição X/Y numérica = alternativa ao arraste,
+  12.2). Edição via `store.updateAnnotation` (reversível).
+- `src/ui/AboutDialog.tsx` — página Sobre (atribuição só aqui; saída neutra).
+- `src/App.tsx` — fases loading/empty/recovery/editing; onboarding por
+  escolher/colar/arrastar (`ingestImageFile`); wordmark na tela inicial.
+  `EditorShell.tsx` — barra (wordmark + Ajuda/Sobre) + zonas; painel lateral
+  (`.editor__side`) = ObjectList + (Propriedades quando objeto livre, senão
+  Comentários).
 
 ### Convenções já estabelecidas (seguir)
 
@@ -139,20 +152,19 @@ recuperar sessão → exportar PNG/Markdown/`.margem` → reimportar `.margem`.
 
 ### Pendências deixadas para WPs de acabamento
 
-- **WP-09 concluído**: focus-trap + retorno de foco nos diálogos; canvas
-  focável com movimento por setas (Shift amplia) e Espaço-hold para pan; lista
-  de objetos navegável sincronizada; live regions (`Announcer`) para
-  undo/redo/excluir/duplicar/exportar; foco visível global; redução de
-  movimento (`prefers-reduced-motion`); `axe-core` em teste (`axe.test.tsx`,
-  contraste de cor fica para o WP-10 por depender de layout). Ainda falta:
-  propriedades numéricas editáveis como alternativa ao arraste (12.2) — depende
-  do PropertiesPanel abaixo.
-- **WP-04 restante**: redimensionar/rotacionar (RF-027 completo), duplicar já
-  existe; seleção múltipla (RF-026, era "1.1").
-- **PropertiesPanel** (painel troca para propriedades ao selecionar objeto
-  livre — seção 6.2) ainda não existe.
+- **WP-10 concluído**: Apêndice C fechado — paleta de 5 cores; categoria define
+  símbolo+cor do marcador; dois tamanhos de texto (16/28); painel troca para
+  propriedades ao selecionar objeto livre (com posição numérica, 12.2).
+  Identidade: wordmark na UI, Sobre, onboarding colar/arrastar/escolher. Saída
+  permanece neutra (RF-064).
+- **WP-04 restante**: redimensionar/rotacionar (RF-027 completo — só posição
+  numérica existe); seleção múltipla (RF-026, era "1.1").
 - **RF-046** (comentário sem marcador) não implementado.
-- Paleta/cores e tamanhos são **provisórios** (Apêndice C) — fechar no WP-10.
+- **Apêndice C ainda em aberto** (não bloqueiam o MVP): "rabicho" do marcador,
+  suavização de desenho livre, edição no mobile, limites de imagem por
+  navegador — fechar no WP-11 se necessário.
+- **Contraste**: `readableInk` cuida do número do marcador; auditoria de
+  contraste da UI como um todo (A11Y-006/008) fica para o WP-11.
 
 ## Ordem recomendada (roadmap, seção 21 e 23.1)
 
