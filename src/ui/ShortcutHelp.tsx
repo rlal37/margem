@@ -1,11 +1,12 @@
 /**
  * Ajuda rápida (Apêndice B: ShortcutHelp; RF-070): diálogo com os atalhos,
  * uma descrição das ferramentas e o princípio de privacidade (seção 6.1).
- * Acessibilidade completa (focus trap) é aprofundada no WP-09; aqui já há
- * role de diálogo, foco inicial, Esc e clique no fundo para fechar.
+ * Acessível (A11Y-002): role de diálogo, focus-trap com Tab circular, Esc
+ * para fechar e retorno do foco a quem abriu.
  */
 
 import { useEffect, useRef } from 'react'
+import { useFocusTrap } from '../accessibility'
 import './ShortcutHelp.css'
 
 interface ShortcutHelpProps {
@@ -58,9 +59,11 @@ const GROUPS: { title: string; rows: Row[] }[] = [
 export function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (open) dialogRef.current?.focus()
-  }, [open])
+  useFocusTrap({
+    active: open,
+    containerRef: dialogRef,
+    initialFocusRef: dialogRef,
+  })
 
   // Esc fecha o diálogo. Em captura, para evitar que o atalho global de Esc
   // (limpar seleção) também dispare enquanto a ajuda está aberta.

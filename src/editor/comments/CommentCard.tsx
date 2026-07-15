@@ -61,6 +61,7 @@ export function CommentCard({
     <li
       ref={cardRef}
       className={`comment-card${active ? ' comment-card--active' : ''}`}
+      aria-current={active ? 'true' : undefined}
     >
       <div className="comment-card__head">
         <button

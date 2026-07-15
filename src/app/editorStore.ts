@@ -14,6 +14,7 @@ import {
   RemoveAnnotationCommand,
   RemoveMarkerCommand,
   ReorderCommentsCommand,
+  ReplaceAnnotationCommand,
   UpdateCommentCommand,
 } from '../editor/history/commands'
 import type { Command } from '../editor/history/command'
@@ -136,6 +137,25 @@ export class EditorStore {
 
   deleteSelected(): void {
     if (this.selectedId !== null) this.deleteAnnotation(this.selectedId)
+  }
+
+  /**
+   * Move a anotação selecionada por (dx, dy) normalizado — alternativa por
+   * teclado ao arraste (seção 12.2, teclas de seta). Reversível como qualquer
+   * movimentação. Ignora deslocamentos anulados pelo limite da imagem para não
+   * poluir o histórico com passos sem efeito.
+   */
+  nudgeSelected(dx: number, dy: number): void {
+    const id = this.selectedId
+    if (id === null) return
+    const source = this.history.state.annotations.find((a) => a.id === id)
+    if (!source) return
+    const moved = moveAnnotation(source, dx, dy)
+    if (JSON.stringify(moved.geometry) === JSON.stringify(source.geometry)) {
+      return
+    }
+    this.history.execute(new ReplaceAnnotationCommand(moved, 'Mover objeto'))
+    this.emit()
   }
 
   /**

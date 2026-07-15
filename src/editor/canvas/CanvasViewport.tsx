@@ -19,6 +19,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type WheelEvent as ReactWheelEvent,
@@ -53,8 +54,14 @@ interface CanvasViewportProps {
   onToolPointerDown?(imagePoint: PixelPoint): void
   onToolPointerMove?(imagePoint: PixelPoint): void
   onToolPointerUp?(imagePoint: PixelPoint): void
+  /** Move a seleção por setas (deslocamento normalizado — seção 12.2). */
+  onNudge?(dx: number, dy: number): void
   children?: ReactNode
 }
+
+/** Passo do movimento por seta em pixels da imagem (Shift amplia). */
+const NUDGE_STEP_PX = 1
+const NUDGE_STEP_LARGE_PX = 10
 
 function toTransform(viewport: Viewport): ViewportTransform {
   return { zoom: viewport.zoom, panX: viewport.panX, panY: viewport.panY }
@@ -80,12 +87,14 @@ export const CanvasViewport = forwardRef<
     onToolPointerDown,
     onToolPointerMove,
     onToolPointerUp,
+    onNudge,
     children,
   },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<PixelSize>({ width: 0, height: 0 })
+  const [spacePan, setSpacePan] = useState(false)
   const panRef = useRef<{ x: number; y: number } | null>(null)
   const toolGestureRef = useRef(false)
 
@@ -188,11 +197,46 @@ export const CanvasViewport = forwardRef<
     emit(zoomBy(toTransform(viewport), factor, focal), 'actual')
   }
 
+  // Setas movem a seleção; segurar Espaço ativa o pan temporário (seção 12.2).
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === ' ' || event.code === 'Space') {
+      event.preventDefault()
+      setSpacePan(true)
+      return
+    }
+    if (!onNudge) return
+    const step = event.shiftKey ? NUDGE_STEP_LARGE_PX : NUDGE_STEP_PX
+    let dx = 0
+    let dy = 0
+    switch (event.key) {
+      case 'ArrowLeft':
+        dx = -step
+        break
+      case 'ArrowRight':
+        dx = step
+        break
+      case 'ArrowUp':
+        dy = -step
+        break
+      case 'ArrowDown':
+        dy = step
+        break
+      default:
+        return
+    }
+    event.preventDefault()
+    onNudge(dx / image.width, dy / image.height)
+  }
+
+  const handleKeyUp = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === ' ' || event.code === 'Space') setSpacePan(false)
+  }
+
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return
     event.currentTarget.setPointerCapture(event.pointerId)
 
-    if (activeTool === 'pan') {
+    if (activeTool === 'pan' || spacePan) {
       panRef.current = { x: event.clientX, y: event.clientY }
       return
     }
@@ -231,23 +275,38 @@ export const CanvasViewport = forwardRef<
   }
 
   const cursor =
-    activeTool === 'pan'
+    activeTool === 'pan' || spacePan
       ? 'grab'
       : CREATE_TOOLS.has(activeTool)
         ? 'crosshair'
         : 'default'
 
+  // O canvas é um widget interativo customizado (role="application"): recebe
+  // foco e trata teclado — setas movem a seleção e Espaço faz pan (seção 12.2).
+  /* eslint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */
   return (
     <div
       ref={containerRef}
       className="canvas-viewport"
       style={{ cursor }}
+      role="application"
+      aria-label="Área de anotação"
+      aria-describedby="canvas-instructions"
+      tabIndex={0}
       onWheel={handleWheel}
+      onKeyDown={handleKeyDown}
+      onKeyUp={handleKeyUp}
+      onBlur={() => setSpacePan(false)}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endGesture}
       onPointerCancel={endGesture}
     >
+      <p id="canvas-instructions" className="visually-hidden">
+        Selecione um objeto na lista de objetos ou no canvas. Com um objeto
+        selecionado, use as setas para movê-lo; Shift move mais. Segure Espaço e
+        arraste para mover o canvas.
+      </p>
       <svg
         className="canvas-viewport__svg"
         width={size.width}
@@ -278,4 +337,5 @@ export const CanvasViewport = forwardRef<
       </svg>
     </div>
   )
+  /* eslint-enable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */
 })

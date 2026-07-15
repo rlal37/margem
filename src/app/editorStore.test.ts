@@ -141,6 +141,48 @@ describe('EditorStore', () => {
     expect(s.getSnapshot().project.comments).toHaveLength(2)
   })
 
+  it('move a seleção por (dx, dy) de forma reversível (nudge — seção 12.2)', () => {
+    const s = store()
+    s.execute(
+      new AddAnnotationCommand(
+        createArea({ x: 0.1, y: 0.1, width: 0.2, height: 0.2 }, { id: 'a1' }),
+      ),
+    )
+    s.select('a1')
+    s.nudgeSelected(0.05, 0)
+
+    const rect = s.getSnapshot().project.annotations[0]
+    expect(rect?.type).toBe('area')
+    if (rect?.type === 'area') {
+      expect(rect.geometry.rect.x).toBeCloseTo(0.15)
+    }
+    expect(s.getSnapshot().canUndo).toBe(true)
+
+    s.undo()
+    const back = s.getSnapshot().project.annotations[0]
+    if (back?.type === 'area') expect(back.geometry.rect.x).toBeCloseTo(0.1)
+  })
+
+  it('nudge sem seleção ou anulado pelo limite não gera comando', () => {
+    const s = store()
+    s.execute(
+      new AddAnnotationCommand(
+        createArea({ x: 0, y: 0, width: 0.2, height: 0.2 }, { id: 'a1' }),
+      ),
+    )
+    // Sem seleção: nada acontece.
+    s.nudgeSelected(0.1, 0.1)
+    expect(s.getSnapshot().canUndo).toBe(true) // só a criação
+    s.undo()
+    expect(s.getSnapshot().canUndo).toBe(false)
+
+    // Com objeto na borda esquerda, empurrar para fora é anulado (sem histórico).
+    s.redo()
+    s.select('a1')
+    s.nudgeSelected(-0.1, 0)
+    expect(s.getSnapshot().canUndo).toBe(true) // ainda só a criação
+  })
+
   it('reordena comentários e renumera marcadores (RF-043)', () => {
     const s = store()
     const first = createMarkerWithComment(

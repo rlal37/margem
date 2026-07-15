@@ -24,6 +24,11 @@
   cursor: grabbing;
 }
 
+.canvas-viewport:focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: -2px;
+}
+
 .canvas-viewport__svg {
   display: block;
 }

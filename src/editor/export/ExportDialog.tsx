@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
+import { useFocusTrap } from '../../accessibility'
 import type { Project } from '../../domain/types'
 import { buildMarkdown } from './markdownExport'
 import { exportMargem } from './margemFile'
@@ -20,25 +21,42 @@ const EXTENSION: Record<Format, string> = {
   margem: '.margem',
 }
 
+const FORMAT_NAME: Record<Format, string> = {
+  png: 'imagem PNG',
+  markdown: 'Markdown',
+  margem: 'projeto .margem',
+}
+
 interface ExportDialogProps {
   open: boolean
   project: Project
   onClose(): void
+  /** Anuncia o resultado em região ao vivo (A11Y-010). */
+  announce?(message: string): void
 }
 
-export function ExportDialog({ open, project, onClose }: ExportDialogProps) {
+export function ExportDialog({
+  open,
+  project,
+  onClose,
+  announce,
+}: ExportDialogProps) {
   const [format, setFormat] = useState<Format>('png')
   const [baseName, setBaseName] = useState(() => defaultBaseName())
   const [includeBackground, setIncludeBackground] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  useFocusTrap({
+    active: open,
+    containerRef: dialogRef,
+    initialFocusRef: closeRef,
+  })
 
   useEffect(() => {
-    if (open) {
-      setError(null)
-      closeRef.current?.focus()
-    }
+    if (open) setError(null)
   }, [open])
 
   useEffect(() => {
@@ -76,6 +94,7 @@ export function ExportDialog({ open, project, onClose }: ExportDialogProps) {
         const blob = await exportMargem(project, imageBlob)
         triggerDownload(blob, filename)
       }
+      announce?.(`Exportado como ${FORMAT_NAME[format]}.`)
       onClose()
     } catch {
       setError(
@@ -89,6 +108,7 @@ export function ExportDialog({ open, project, onClose }: ExportDialogProps) {
   return (
     <div className="export-dialog__backdrop">
       <div
+        ref={dialogRef}
         className="export-dialog"
         role="dialog"
         aria-modal="true"

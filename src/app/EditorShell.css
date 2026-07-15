@@ -90,6 +90,16 @@
   min-height: 0;
 }
 
+/* Coluna lateral: lista de objetos (topo) e comentários (preenche o resto). */
+.editor__side {
+  width: 18rem;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
+}
+
 /* Editor de texto inline sobre o canvas (seção 9.3: clique e digitação). */
 .editor__text-input {
   position: absolute;
@@ -106,6 +116,10 @@
 @media (prefers-color-scheme: dark) {
   .editor__bar {
     border-bottom-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .editor__side {
+    border-left-color: rgba(255, 255, 255, 0.15);
   }
 
   .editor__actions button {

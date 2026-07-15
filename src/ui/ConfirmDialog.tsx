@@ -1,10 +1,12 @@
 /**
  * Diálogo de confirmação (Apêndice B: ConfirmDialog) — proteção contra perda
- * de dados (seção 17.3). Acessível: role de diálogo, foco inicial no botão de
- * confirmação e Esc para cancelar. Focus-trap completo é aprofundado no WP-09.
+ * de dados (seção 17.3). Acessível (A11Y-002): role de diálogo, focus-trap
+ * com foco inicial no botão de confirmação, Esc para cancelar e retorno do
+ * foco a quem abriu ao fechar.
  */
 
 import { useEffect, useRef } from 'react'
+import { useFocusTrap } from '../accessibility'
 import './ConfirmDialog.css'
 
 interface ConfirmDialogProps {
@@ -27,10 +29,13 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const confirmRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (open) confirmRef.current?.focus()
-  }, [open])
+  useFocusTrap({
+    active: open,
+    containerRef: dialogRef,
+    initialFocusRef: confirmRef,
+  })
 
   useEffect(() => {
     if (!open) return
@@ -49,6 +54,7 @@ export function ConfirmDialog({
   return (
     <div className="confirm-dialog__backdrop">
       <div
+        ref={dialogRef}
         className="confirm-dialog"
         role="alertdialog"
         aria-modal="true"

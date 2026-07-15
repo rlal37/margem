@@ -7,6 +7,7 @@
 import { useEffect, type RefObject } from 'react'
 import type { EditorStore } from '../app/editorStore'
 import type { CanvasViewportHandle } from '../editor/canvas'
+import { ANNOUNCE } from './announcer'
 import { isEditingText, matchShortcut } from './shortcuts'
 
 interface KeyboardShortcutsOptions {
@@ -16,6 +17,8 @@ interface KeyboardShortcutsOptions {
   cancelGesture(): boolean
   onToggleHelp(): void
   onExport(): void
+  /** Anuncia o resultado da ação em região ao vivo (A11Y-010). */
+  announce?(message: string): void
 }
 
 export function useKeyboardShortcuts({
@@ -24,6 +27,7 @@ export function useKeyboardShortcuts({
   cancelGesture,
   onToggleHelp,
   onExport,
+  announce,
 }: KeyboardShortcutsOptions): void {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -39,18 +43,26 @@ export function useKeyboardShortcuts({
         case 'undo':
           event.preventDefault()
           store.undo()
+          announce?.(ANNOUNCE.undo)
           break
         case 'redo':
           event.preventDefault()
           store.redo()
+          announce?.(ANNOUNCE.redo)
           break
         case 'delete':
           event.preventDefault()
-          store.deleteSelected()
+          if (store.getSnapshot().selectedId !== null) {
+            store.deleteSelected()
+            announce?.(ANNOUNCE.delete)
+          }
           break
         case 'duplicate':
           event.preventDefault()
-          store.duplicateSelected()
+          if (store.getSnapshot().selectedId !== null) {
+            store.duplicateSelected()
+            announce?.(ANNOUNCE.duplicate)
+          }
           break
         case 'export':
           event.preventDefault()
@@ -86,5 +98,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [store, canvas, cancelGesture, onToggleHelp, onExport])
+  }, [store, canvas, cancelGesture, onToggleHelp, onExport, announce])
 }

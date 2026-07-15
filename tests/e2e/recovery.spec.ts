@@ -18,8 +18,9 @@ test('autosave e recuperação de sessão (WP-07)', async ({ page }) => {
   const layer = page.locator('[data-testid="annotation-layer"]').first()
   await expect(layer.locator('circle')).toHaveCount(1)
 
-  // Autosave conclui (RF-053, CA-08).
-  const save = page.getByRole('status')
+  // Autosave conclui (RF-053, CA-08). Alvo específico: o indicador de
+  // salvamento (há também a região ao vivo de anúncios — WP-09).
+  const save = page.locator('.editor__save')
   await expect(save).toHaveText('Salvando…')
   await expect(save).toHaveText('Salvo neste navegador')
 

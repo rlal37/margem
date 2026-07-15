@@ -70,10 +70,11 @@ tests/
 
 ## Estado atual (2026-07-15)
 
-**WP-01 a WP-08 concluídos, verificados e no ar.** Repositório
+**WP-01 a WP-09 concluídos, verificados e no ar.** Repositório
 `rlal37/margem` (branch `master`), publicado por GitHub Actions em
 `https://rlal37.github.io/margem/`. CI roda lint + format:check + test +
-build + e2e; deploy automático no push. **Próximo: WP-09 Acessibilidade.**
+build + e2e; deploy automático no push. **Próximo: WP-10 Identidade e
+conteúdo** (fechar paleta/tamanhos provisórios, microcopy, Sobre).
 
 O fluxo principal do MVP funciona ponta a ponta: importar imagem (seletor de
 arquivo) → anotar (marcador/área/seta/desenho/texto) → comentar → autosave →
@@ -105,8 +106,18 @@ recuperar sessão → exportar PNG/Markdown/`.margem` → reimportar `.margem`.
 - `src/storage/` — `db.ts` (wrapper IndexedDB) + `projectStore.ts` (chave
   única `current`; imagem como Blob, JSON à parte; object URL recriado no load).
 - `src/accessibility/` — `shortcuts.ts` (`matchShortcut` puro) +
-  `useKeyboardShortcuts.ts`. `src/ui/` — `ShortcutHelp`, `ConfirmDialog`.
-- `src/App.tsx` — fases loading/empty/recovery/editing; `EditorShell.tsx` — barra + zonas.
+  `useKeyboardShortcuts.ts` (anuncia undo/redo/excluir/duplicar); `announcer.ts`
+  (`Announcer` observável + `ANNOUNCE`) + `LiveRegion.tsx` (região ao vivo);
+  `useFocusTrap.ts` (Tab circular + retorno de foco nos diálogos).
+  `src/ui/` — `ShortcutHelp`, `ConfirmDialog` (ambos usam `useFocusTrap`).
+- `src/domain/describe.ts` — texto acessível de anotação (tipo, número,
+  posição em terços) para a lista de objetos e leitores de tela.
+- `src/editor/canvas/ObjectList.tsx` — lista de objetos navegável, seleção
+  sincronizada ao canvas (seção 12.2); `CanvasViewport` é focável
+  (`role="application"`), setas movem a seleção (`store.nudgeSelected`) e
+  Espaço-hold faz pan.
+- `src/App.tsx` — fases loading/empty/recovery/editing; `EditorShell.tsx` —
+  barra + zonas; painel lateral (`.editor__side`) empilha ObjectList + Comments.
 
 ### Convenções já estabelecidas (seguir)
 
@@ -128,9 +139,14 @@ recuperar sessão → exportar PNG/Markdown/`.margem` → reimportar `.margem`.
 
 ### Pendências deixadas para WPs de acabamento
 
-- **WP-09**: focus-trap real nos diálogos; navegação do canvas por teclado
-  (lista de objetos, seta move, A11Y-002/003/012.2); live regions; espaço-hold
-  para pan; `axe`. Muitos componentes têm só o mínimo de a11y marcado.
+- **WP-09 concluído**: focus-trap + retorno de foco nos diálogos; canvas
+  focável com movimento por setas (Shift amplia) e Espaço-hold para pan; lista
+  de objetos navegável sincronizada; live regions (`Announcer`) para
+  undo/redo/excluir/duplicar/exportar; foco visível global; redução de
+  movimento (`prefers-reduced-motion`); `axe-core` em teste (`axe.test.tsx`,
+  contraste de cor fica para o WP-10 por depender de layout). Ainda falta:
+  propriedades numéricas editáveis como alternativa ao arraste (12.2) — depende
+  do PropertiesPanel abaixo.
 - **WP-04 restante**: redimensionar/rotacionar (RF-027 completo), duplicar já
   existe; seleção múltipla (RF-026, era "1.1").
 - **PropertiesPanel** (painel troca para propriedades ao selecionar objeto

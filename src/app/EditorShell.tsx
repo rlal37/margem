@@ -4,10 +4,11 @@
  * instala os atalhos de teclado (WP-06).
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AnnotationLayer,
   CanvasViewport,
+  ObjectList,
   SelectionOverlay,
   imageToScreen,
   type CanvasViewportHandle,
@@ -15,7 +16,12 @@ import {
 import { ToolRail, useCanvasTools } from '../editor/tools'
 import { CommentsPanel } from '../editor/comments'
 import { ExportDialog } from '../editor/export'
-import { useKeyboardShortcuts } from '../accessibility'
+import {
+  ANNOUNCE,
+  Announcer,
+  LiveRegion,
+  useKeyboardShortcuts,
+} from '../accessibility'
 import { ShortcutHelp } from '../ui/ShortcutHelp'
 import type { Annotation, Comment } from '../domain/types'
 import { useEditor } from './editorContext'
@@ -40,6 +46,9 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
   const [exportOpen, setExportOpen] = useState(false)
   const saveStatus = useAutosave(store)
 
+  const announcer = useMemo(() => new Announcer(), [])
+  const announce = announcer.announce
+
   const imageSize = { width: project.image.width, height: project.image.height }
   const tools = useCanvasTools(store, project, imageSize, project.viewport.zoom)
 
@@ -51,7 +60,17 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
     cancelGesture: tools.cancelGesture,
     onToggleHelp: toggleHelp,
     onExport: openExport,
+    announce,
   })
+
+  const undo = useCallback(() => {
+    store.undo()
+    announce(ANNOUNCE.undo)
+  }, [store, announce])
+  const redo = useCallback(() => {
+    store.redo()
+    announce(ANNOUNCE.redo)
+  }, [store, announce])
 
   // Foca o editor de texto assim que ele aparece (sem prop autoFocus).
   const isEditingTextAnnotation = tools.textEditor !== null
@@ -109,7 +128,7 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
           <div role="group" aria-label="Histórico">
             <button
               type="button"
-              onClick={() => store.undo()}
+              onClick={undo}
               disabled={!canUndo}
               title="Desfazer (Ctrl/Cmd+Z)"
             >
@@ -117,7 +136,7 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
             </button>
             <button
               type="button"
-              onClick={() => store.redo()}
+              onClick={redo}
               disabled={!canRedo}
               title="Refazer (Ctrl/Cmd+Shift+Z)"
             >
@@ -178,6 +197,7 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
             onToolPointerDown={tools.onToolPointerDown}
             onToolPointerMove={tools.onToolPointerMove}
             onToolPointerUp={tools.onToolPointerUp}
+            onNudge={(dx, dy) => store.nudgeSelected(dx, dy)}
           >
             <AnnotationLayer
               annotations={renderAnnotations}
@@ -227,16 +247,25 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
           )}
         </main>
 
-        <CommentsPanel
-          comments={project.comments}
-          activeMarkerId={selectedId}
-          onUpdate={(c) => store.updateComment(c)}
-          onReorder={(ids) => store.reorderComments(ids)}
-          onDelete={(c) =>
-            c.markerAnnotationId && store.deleteAnnotation(c.markerAnnotationId)
-          }
-          onFocus={focusComment}
-        />
+        <div className="editor__side">
+          <ObjectList
+            annotations={project.annotations}
+            comments={project.comments}
+            selectedId={selectedId}
+            onSelect={(id) => store.select(id)}
+          />
+          <CommentsPanel
+            comments={project.comments}
+            activeMarkerId={selectedId}
+            onUpdate={(c) => store.updateComment(c)}
+            onReorder={(ids) => store.reorderComments(ids)}
+            onDelete={(c) =>
+              c.markerAnnotationId &&
+              store.deleteAnnotation(c.markerAnnotationId)
+            }
+            onFocus={focusComment}
+          />
+        </div>
       </div>
 
       <ShortcutHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
@@ -244,7 +273,9 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
         open={exportOpen}
         project={project}
         onClose={() => setExportOpen(false)}
+        announce={announce}
       />
+      <LiveRegion announcer={announcer} />
     </div>
   )
 }
