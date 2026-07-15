@@ -1,0 +1,81 @@
+.about-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  z-index: 10;
+}
+
+.about-dialog {
+  background: #ffffff;
+  color: #111111;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  max-width: 32rem;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.about-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.about-dialog__header h2 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.about-dialog__header button {
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: inherit;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.about-dialog__header button:focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: 2px;
+}
+
+.about-dialog__section {
+  margin-top: 1rem;
+}
+
+.about-dialog__section h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  margin: 0 0 0.25rem;
+}
+
+.about-dialog__section p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.about-dialog__section a {
+  color: #1f6feb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .about-dialog {
+    background: #1d1e24;
+    color: #f3f4f6;
+  }
+
+  .about-dialog__section a {
+    color: #6ea8fe;
+  }
+}

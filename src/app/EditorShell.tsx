@@ -24,6 +24,7 @@ import {
   useKeyboardShortcuts,
 } from '../accessibility'
 import { ShortcutHelp } from '../ui/ShortcutHelp'
+import { AboutDialog } from '../ui/AboutDialog'
 import type { Annotation, Comment } from '../domain/types'
 import { useEditor } from './editorContext'
 import { useAutosave, type SaveStatus } from './useAutosave'
@@ -45,6 +46,7 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
   const textInputRef = useRef<HTMLInputElement>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
   const saveStatus = useAutosave(store)
 
   const announcer = useMemo(() => new Announcer(), [])
@@ -106,6 +108,7 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
     <div className="editor">
       <header className="editor__bar">
         <div className="editor__meta">
+          <span className="editor__brand">Margem</span>
           <span className="editor__title">{project.image.originalName}</span>
           <span
             className={`editor__save editor__save--${saveStatus}`}
@@ -181,6 +184,14 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
             aria-haspopup="dialog"
           >
             Ajuda
+          </button>
+          <button
+            type="button"
+            onClick={() => setAboutOpen(true)}
+            title="Sobre a Margem"
+            aria-haspopup="dialog"
+          >
+            Sobre
           </button>
         </div>
       </header>
@@ -278,6 +289,7 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
       </div>
 
       <ShortcutHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <ExportDialog
         open={exportOpen}
         project={project}

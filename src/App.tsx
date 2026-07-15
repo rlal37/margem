@@ -1,4 +1,10 @@
-import { useEffect, useState, type ChangeEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+} from 'react'
 import './App.css'
 import { EditorProvider } from './app/EditorProvider'
 import { EditorShell } from './app/EditorShell'
@@ -13,6 +19,7 @@ import {
   saveProjectData,
 } from './storage'
 import { ConfirmDialog } from './ui/ConfirmDialog'
+import { AboutDialog } from './ui/AboutDialog'
 import type { Project } from './domain/types'
 
 type Phase = 'loading' | 'empty' | 'recovery' | 'editing'
@@ -22,6 +29,8 @@ function App() {
   const [project, setProject] = useState<Project | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [confirmNew, setConfirmNew] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
 
   // Na abertura, verifica se há um projeto recuperável (RF-054, seção 7.6).
   useEffect(() => {
@@ -38,11 +47,9 @@ function App() {
     }
   }, [])
 
-  async function handleFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-
+  // Ingestão única de imagem, compartilhada por escolher, colar e arrastar
+  // (seção 6.1: três formas de importar).
+  const ingestImageFile = useCallback(async (file: File) => {
     const result = await loadImageAsset(file)
     if (!result.ok) {
       setError(result.error)
@@ -60,6 +67,36 @@ function App() {
     setError(null)
     setProject(created)
     setPhase('editing')
+  }, [])
+
+  function handleFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (file) void ingestImageFile(file)
+  }
+
+  // Colar imagem da área de transferência, apenas na tela inicial vazia.
+  useEffect(() => {
+    if (phase !== 'empty') return
+    function onPaste(event: ClipboardEvent) {
+      const item = Array.from(event.clipboardData?.items ?? []).find((i) =>
+        i.type.startsWith('image/'),
+      )
+      const file = item?.getAsFile()
+      if (file) {
+        event.preventDefault()
+        void ingestImageFile(file)
+      }
+    }
+    window.addEventListener('paste', onPaste)
+    return () => window.removeEventListener('paste', onPaste)
+  }, [phase, ingestImageFile])
+
+  function handleDrop(event: DragEvent<HTMLElement>) {
+    event.preventDefault()
+    setDragActive(false)
+    const file = event.dataTransfer.files?.[0]
+    if (file) void ingestImageFile(file)
   }
 
   async function handleImportMargem(event: ChangeEvent<HTMLInputElement>) {
@@ -168,46 +205,69 @@ function App() {
 
   // phase === 'empty'
   return (
-    <main className="empty-state">
-      <div className="empty-state__card">
-        <h1 className="empty-state__title">Traga uma imagem para a margem.</h1>
-        <p className="empty-state__hint">
-          Cole, arraste ou escolha um arquivo PNG, JPEG ou WebP.
-        </p>
-
-        <div className="empty-state__choices">
-          <label className="empty-state__button">
-            Escolher imagem
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleFile}
-              className="empty-state__input"
-            />
-          </label>
-
-          <label className="empty-state__link">
-            Abrir projeto .margem
-            <input
-              type="file"
-              accept=".margem,application/json"
-              onChange={handleImportMargem}
-              className="empty-state__input"
-            />
-          </label>
-        </div>
-
-        {error && (
-          <p role="alert" className="empty-state__error">
-            {error}
+    <>
+      <main
+        className={`empty-state${dragActive ? ' empty-state--drag' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setDragActive(true)
+        }}
+        onDragLeave={() => setDragActive(false)}
+        onDrop={handleDrop}
+      >
+        <div className="empty-state__card">
+          <p className="empty-state__brand">Margem</p>
+          <h1 className="empty-state__title">
+            Traga uma imagem para a margem.
+          </h1>
+          <p className="empty-state__hint">
+            Cole, arraste ou escolha um arquivo PNG, JPEG ou WebP.
           </p>
-        )}
 
-        <p className="empty-state__privacy">
-          A imagem e as anotações ficam neste navegador.
-        </p>
-      </div>
-    </main>
+          <div className="empty-state__choices">
+            <label className="empty-state__button">
+              Escolher imagem
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleFile}
+                className="empty-state__input"
+              />
+            </label>
+
+            <label className="empty-state__link">
+              Abrir projeto .margem
+              <input
+                type="file"
+                accept=".margem,application/json"
+                onChange={handleImportMargem}
+                className="empty-state__input"
+              />
+            </label>
+
+            <button
+              type="button"
+              className="empty-state__link"
+              onClick={() => setAboutOpen(true)}
+              aria-haspopup="dialog"
+            >
+              Sobre a Margem
+            </button>
+          </div>
+
+          {error && (
+            <p role="alert" className="empty-state__error">
+              {error}
+            </p>
+          )}
+
+          <p className="empty-state__privacy">
+            A imagem e as anotações ficam neste navegador.
+          </p>
+        </div>
+      </main>
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
+    </>
   )
 }
 

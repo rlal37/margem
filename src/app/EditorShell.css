@@ -21,6 +21,12 @@
   min-width: 0;
 }
 
+.editor__brand {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  flex: 0 0 auto;
+}
+
 .editor__title {
   font-size: 0.875rem;
   opacity: 0.75;
