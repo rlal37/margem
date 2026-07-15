@@ -1,0 +1,50 @@
+.canvas-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Área externa ao limite da imagem (RF-015): fundo neutro e discreto. */
+  background-color: #edece8;
+  background-image:
+    linear-gradient(45deg, #e3e2dd 25%, transparent 25%),
+    linear-gradient(-45deg, #e3e2dd 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e3e2dd 75%),
+    linear-gradient(-45deg, transparent 75%, #e3e2dd 75%);
+  background-size: 20px 20px;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.canvas-viewport:active {
+  cursor: grabbing;
+}
+
+.canvas-viewport__svg {
+  display: block;
+}
+
+/* Limite da imagem (RF-015): contorno fino independente do zoom. */
+.canvas-viewport__bounds {
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .canvas-viewport {
+    background-color: #23242a;
+    background-image:
+      linear-gradient(45deg, #2c2d34 25%, transparent 25%),
+      linear-gradient(-45deg, #2c2d34 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2c2d34 75%),
+      linear-gradient(-45deg, transparent 75%, #2c2d34 75%);
+  }
+
+  .canvas-viewport__bounds {
+    stroke: rgba(255, 255, 255, 0.4);
+  }
+}
