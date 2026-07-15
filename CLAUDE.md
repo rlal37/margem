@@ -68,6 +68,76 @@ tests/
 - Se a tarefa envolve issue/commit, referencie o ID do requisito, ex.:
   `RF-043 — Reordenar comentários e renumerar marcadores`.
 
+## Estado atual (2026-07-15)
+
+**WP-01 a WP-08 concluídos, verificados e no ar.** Repositório
+`rlal37/margem` (branch `master`), publicado por GitHub Actions em
+`https://rlal37.github.io/margem/`. CI roda lint + format:check + test +
+build + e2e; deploy automático no push. **Próximo: WP-09 Acessibilidade.**
+
+O fluxo principal do MVP funciona ponta a ponta: importar imagem (seletor de
+arquivo) → anotar (marcador/área/seta/desenho/texto) → comentar → autosave →
+recuperar sessão → exportar PNG/Markdown/`.margem` → reimportar `.margem`.
+
+### Arquitetura como construída (pontos de entrada)
+
+- `src/domain/` — puro, sem UI. `types.ts` (união `Annotation`, `Comment`,
+  `Project`), `geometry.ts` (coordenadas normalizadas), `factories.ts`,
+  `numbering.ts` (ordem/renumeração), `validation.ts` (`parseProject`),
+  `constants.ts` (paleta/limites provisórios).
+- `src/editor/history/` — `command.ts` (`Command`, `ProjectHistory` com
+  `replace` para campos não-undoable) e `commands.ts` (Add/Replace/Remove,
+  AddMarker/RemoveMarker, ReorderComments, UpdateComment).
+- `src/app/editorStore.ts` — **store central** (`EditorStore` +
+  `useSyncExternalStore`): projeto+ferramenta+seleção; toda edição via
+  comando. `EditorProvider`/`editorContext.ts` expõem `useEditor()`.
+  `useAutosave.ts` (debounce + estado salvando/salvo/falha).
+- `src/editor/canvas/` — `viewport.ts` (fit/zoom/pan puros),
+  `CanvasViewport.tsx` (SVG, delega ponteiro à ferramenta, `centerOn`),
+  `AnnotationLayer.tsx`, `SelectionOverlay.tsx`, `imageAsset.ts` (carregar
+  imagem).
+- `src/editor/tools/` — `tools.ts` (criação/mover/hit-test puros),
+  `useCanvasTools.ts` (gestos → comandos, `cancelGesture`), `ToolRail.tsx`.
+- `src/editor/comments/` — `CommentsPanel`/`CommentCard` (edição no blur,
+  reordenar ↑/↓, vínculo bidirecional).
+- `src/editor/export/` — `pngExport`, `markdownExport`, `margemFile`
+  (JSON+base64, export/import), `download.ts`, `ExportDialog.tsx`.
+- `src/storage/` — `db.ts` (wrapper IndexedDB) + `projectStore.ts` (chave
+  única `current`; imagem como Blob, JSON à parte; object URL recriado no load).
+- `src/accessibility/` — `shortcuts.ts` (`matchShortcut` puro) +
+  `useKeyboardShortcuts.ts`. `src/ui/` — `ShortcutHelp`, `ConfirmDialog`.
+- `src/App.tsx` — fases loading/empty/recovery/editing; `EditorShell.tsx` — barra + zonas.
+
+### Convenções já estabelecidas (seguir)
+
+- **Node 24** (winget). No Windows, `node`/`npm` **não ficam no PATH** destas
+  sessões: prefixar `$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User')` antes de `npm`.
+- **ESLint 9 / react-hooks 5 fixos** (não atualizar sem checar peers — ver
+  memória `toolchain-pins`). `verbatimModuleSyntax`+`erasableSyntaxOnly`
+  ligados: use `import type`, **sem** enums, **sem** parameter properties.
+- Pastas com arquivos reais **não** têm `.gitkeep`. Cada pasta tem `index.ts`.
+- Diálogos: `role="dialog"`, foco inicial, Esc em listener de **captura** com
+  `stopPropagation` (não usar handlers de clique em elemento não-interativo —
+  o `jsx-a11y` barra).
+- Testes puros no domínio/tools/export; componentes com Testing Library;
+  **fluxos reais no e2e** (Playwright, Chromium). IndexedDB testado com
+  `fake-indexeddb`. No e2e o input de imagem é `input[accept*="image"]` e o de
+  projeto `input[accept*="margem"]` (há dois inputs de arquivo).
+- Sizes de traço/marcador/texto = imagem-px = "aparência a 100%"; export PNG é
+  fiel a isso.
+
+### Pendências deixadas para WPs de acabamento
+
+- **WP-09**: focus-trap real nos diálogos; navegação do canvas por teclado
+  (lista de objetos, seta move, A11Y-002/003/012.2); live regions; espaço-hold
+  para pan; `axe`. Muitos componentes têm só o mínimo de a11y marcado.
+- **WP-04 restante**: redimensionar/rotacionar (RF-027 completo), duplicar já
+  existe; seleção múltipla (RF-026, era "1.1").
+- **PropertiesPanel** (painel troca para propriedades ao selecionar objeto
+  livre — seção 6.2) ainda não existe.
+- **RF-046** (comentário sem marcador) não implementado.
+- Paleta/cores e tamanhos são **provisórios** (Apêndice C) — fechar no WP-10.
+
 ## Ordem recomendada (roadmap, seção 21 e 23.1)
 
 `WP-01 Base do projeto → WP-02 Domínio → WP-03 Viewport → WP-04 Ferramentas
