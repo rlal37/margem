@@ -1,10 +1,10 @@
 /**
  * Constantes do domínio.
  *
- * NOTA: a quantidade final de cores da paleta é uma questão em aberto do MVP
- * (Apêndice C do documento de requisitos) e deve ser fechada por protótipo
- * antes do acabamento visual. Os valores abaixo são padrões provisórios,
- * concentrados aqui para trocar em um único lugar — não são decisão final.
+ * Decisões do Apêndice C fechadas no WP-10: paleta curta de 5 cores; a
+ * categoria do comentário define símbolo e cor do marcador (ver
+ * `CATEGORY_APPEARANCE` e `domain/appearance.ts`); marcador sem categoria usa
+ * a aparência neutra (`DEFAULT_MARKER_COLOR` + `DEFAULT_MARKER_SYMBOL`).
  */
 
 import type { CommentCategory, MarkerSymbol, SupportedImageType } from './types'
@@ -19,13 +19,10 @@ export const SUPPORTED_IMAGE_TYPES = [
   'image/webp',
 ] as const satisfies readonly SupportedImageType[]
 
-/**
- * Cor principal de anotação. Provisória — usa o valor do exemplo de schema
- * do documento (seção 13.2).
- */
+/** Cor principal de anotação livre (área, seta, desenho, texto). */
 export const DEFAULT_ANNOTATION_COLOR = '#B43A2C'
 
-/** Paleta provisória de anotação (curta e previsível — princípio 11.3). */
+/** Paleta de anotação — curta e previsível (5 cores, princípio 11.3). */
 export const ANNOTATION_PALETTE = [
   '#B43A2C', // vermelho editorial (principal)
   '#1F6FEB', // azul
@@ -43,18 +40,24 @@ export const DEFAULT_OPACITY = 1
 /** Tamanho de texto padrão no canvas. */
 export const DEFAULT_FONT_SIZE = 16
 
-/**
- * Símbolo padrão do marcador. Símbolos disponíveis espelham as categorias
- * de comentário (seção 10.3), mas símbolo e categoria são independentes.
- */
+/** Símbolo do marcador sem categoria (aparência neutra). */
 export const DEFAULT_MARKER_SYMBOL: MarkerSymbol = 'circle'
 
-/** Mapa sugerido de símbolo por categoria (seção 10.3). */
-export const CATEGORY_SYMBOL: Record<CommentCategory, MarkerSymbol> = {
-  observacao: 'circle',
-  problema: 'triangle',
-  duvida: 'diamond',
-  sugestao: 'square',
+/** Cor do marcador sem categoria (neutra; as categorias trazem cor própria). */
+export const DEFAULT_MARKER_COLOR = '#111111'
+
+/**
+ * Aparência do marcador por categoria (seção 10.3 + decisão do Apêndice C):
+ * a categoria do comentário define símbolo e cor. Cores vêm da paleta curta.
+ */
+export const CATEGORY_APPEARANCE: Record<
+  CommentCategory,
+  { symbol: MarkerSymbol; color: string }
+> = {
+  observacao: { symbol: 'circle', color: '#1F6FEB' }, // azul — informativo
+  problema: { symbol: 'triangle', color: '#B43A2C' }, // vermelho — corrigir
+  duvida: { symbol: 'diamond', color: '#F08C00' }, // âmbar — confirmar
+  sugestao: { symbol: 'square', color: '#2F9E44' }, // verde — melhoria
 }
 
 /**

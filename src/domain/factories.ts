@@ -10,6 +10,7 @@
 import {
   DEFAULT_ANNOTATION_COLOR,
   DEFAULT_FONT_SIZE,
+  DEFAULT_MARKER_COLOR,
   DEFAULT_MARKER_SYMBOL,
   DEFAULT_OPACITY,
   DEFAULT_STROKE_WIDTH,
@@ -83,7 +84,7 @@ export function createMarker(
     commentId: options.commentId,
     geometry: { point },
     style: {
-      color: options.color ?? DEFAULT_ANNOTATION_COLOR,
+      color: options.color ?? DEFAULT_MARKER_COLOR,
       symbol: options.symbol ?? DEFAULT_MARKER_SYMBOL,
     },
   }

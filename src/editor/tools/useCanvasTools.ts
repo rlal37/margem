@@ -136,8 +136,9 @@ export function useCanvasTools(
           break
         }
         case 'marker': {
+          // Marcador nasce sem categoria (aparência neutra); a categoria do
+          // comentário passa a definir símbolo e cor (decisão do Apêndice C).
           const { annotation, comment } = createMarkerWithComment(norm, {
-            color: project.preferences.color,
             order: project.comments.length + 1,
             zIndex: nextZIndex(),
           })

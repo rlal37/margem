@@ -11,6 +11,11 @@
  *   escalados por 1/zoom para não encolher/crescer com o zoom.
  */
 
+import {
+  markerAppearance,
+  readableInk,
+  symbolPolygon,
+} from '../../domain/appearance'
 import type { PixelSize } from '../../domain/geometry'
 import { markerNumber } from '../../domain/numbering'
 import type {
@@ -121,14 +126,23 @@ function MarkerShape({
   const cy = annotation.geometry.point.y * size.height
   const r = MARKER_RADIUS_PX / zoom
   const number = markerNumber(annotation, comments)
+  const { symbol, color } = markerAppearance(annotation, comments)
+  const polygon = symbolPolygon(symbol, r)
   return (
     <g>
-      <circle cx={cx} cy={cy} r={r} fill={annotation.style.color} />
+      {polygon ? (
+        <polygon
+          points={polygon.map((p) => `${cx + p.x},${cy + p.y}`).join(' ')}
+          fill={color}
+        />
+      ) : (
+        <circle cx={cx} cy={cy} r={r} fill={color} />
+      )}
       <text
         x={cx}
         y={cy}
         fontSize={MARKER_FONT_PX / zoom}
-        fill="#ffffff"
+        fill={readableInk(color)}
         textAnchor="middle"
         dominantBaseline="central"
         fontWeight={600}

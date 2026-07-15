@@ -8,6 +8,11 @@
  * "o que se vê no zoom 100%".
  */
 
+import {
+  markerAppearance,
+  readableInk,
+  symbolPolygon,
+} from '../../domain/appearance'
 import { markerNumber } from '../../domain/numbering'
 import type { Annotation, Project } from '../../domain/types'
 
@@ -155,14 +160,24 @@ function drawAnnotation(
     case 'marker': {
       const cx = annotation.geometry.point.x * w
       const cy = annotation.geometry.point.y * h
+      const { symbol, color } = markerAppearance(annotation, project.comments)
+      const polygon = symbolPolygon(symbol, MARKER_RADIUS)
       ctx.save()
-      ctx.fillStyle = annotation.style.color
+      ctx.fillStyle = color
       ctx.beginPath()
-      ctx.arc(cx, cy, MARKER_RADIUS, 0, Math.PI * 2)
+      if (polygon) {
+        polygon.forEach((p, i) => {
+          if (i === 0) ctx.moveTo(cx + p.x, cy + p.y)
+          else ctx.lineTo(cx + p.x, cy + p.y)
+        })
+        ctx.closePath()
+      } else {
+        ctx.arc(cx, cy, MARKER_RADIUS, 0, Math.PI * 2)
+      }
       ctx.fill()
       const number = markerNumber(annotation, project.comments)
       if (number !== undefined) {
-        ctx.fillStyle = '#ffffff'
+        ctx.fillStyle = readableInk(color)
         ctx.font = `600 ${MARKER_FONT}px ${FONT_FAMILY}`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
