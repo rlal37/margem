@@ -14,6 +14,7 @@ import {
 } from '../editor/canvas'
 import { ToolRail, useCanvasTools } from '../editor/tools'
 import { CommentsPanel } from '../editor/comments'
+import { ExportDialog } from '../editor/export'
 import { useKeyboardShortcuts } from '../accessibility'
 import { ShortcutHelp } from '../ui/ShortcutHelp'
 import type { Annotation, Comment } from '../domain/types'
@@ -36,17 +37,20 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
   const canvasRef = useRef<CanvasViewportHandle>(null)
   const textInputRef = useRef<HTMLInputElement>(null)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
   const saveStatus = useAutosave(store)
 
   const imageSize = { width: project.image.width, height: project.image.height }
   const tools = useCanvasTools(store, project, imageSize, project.viewport.zoom)
 
   const toggleHelp = useCallback(() => setHelpOpen((open) => !open), [])
+  const openExport = useCallback(() => setExportOpen(true), [])
   useKeyboardShortcuts({
     store,
     canvas: canvasRef,
     cancelGesture: tools.cancelGesture,
     onToggleHelp: toggleHelp,
+    onExport: openExport,
   })
 
   // Foca o editor de texto assim que ele aparece (sem prop autoFocus).
@@ -94,6 +98,13 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
         <div className="editor__actions">
           <button type="button" onClick={onNewProject} title="Novo projeto">
             Novo projeto
+          </button>
+          <button
+            type="button"
+            onClick={openExport}
+            title="Exportar (Ctrl/Cmd+E)"
+          >
+            Exportar
           </button>
           <div role="group" aria-label="Histórico">
             <button
@@ -229,6 +240,11 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
       </div>
 
       <ShortcutHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <ExportDialog
+        open={exportOpen}
+        project={project}
+        onClose={() => setExportOpen(false)}
+      />
     </div>
   )
 }

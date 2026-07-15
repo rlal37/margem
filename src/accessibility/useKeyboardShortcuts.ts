@@ -15,6 +15,7 @@ interface KeyboardShortcutsOptions {
   /** Cancela um gesto/edição em andamento; retorna se havia algo a cancelar. */
   cancelGesture(): boolean
   onToggleHelp(): void
+  onExport(): void
 }
 
 export function useKeyboardShortcuts({
@@ -22,6 +23,7 @@ export function useKeyboardShortcuts({
   canvas,
   cancelGesture,
   onToggleHelp,
+  onExport,
 }: KeyboardShortcutsOptions): void {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -49,6 +51,10 @@ export function useKeyboardShortcuts({
         case 'duplicate':
           event.preventDefault()
           store.duplicateSelected()
+          break
+        case 'export':
+          event.preventDefault()
+          onExport()
           break
         case 'zoomIn':
           event.preventDefault()
@@ -80,5 +86,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [store, canvas, cancelGesture, onToggleHelp])
+  }, [store, canvas, cancelGesture, onToggleHelp, onExport])
 }

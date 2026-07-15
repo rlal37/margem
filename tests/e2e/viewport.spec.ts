@@ -7,7 +7,7 @@ test('carrega imagem-base e permite ampliar', async ({ page }) => {
   await page.goto('/margem/')
 
   // RF-001: escolher arquivo pela tela inicial.
-  await page.setInputFiles('input[type="file"]', sample)
+  await page.setInputFiles('input[accept*="image"]', sample)
 
   // Entra no editor com a imagem renderizada em SVG.
   const canvas = page.getByRole('img', { name: /Imagem sample\.png/ })

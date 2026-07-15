@@ -5,7 +5,7 @@ const sample = fileURLToPath(new URL('./fixtures/sample.png', import.meta.url))
 
 test('cria marcador e área, e desfaz (WP-04)', async ({ page }) => {
   await page.goto('/margem/')
-  await page.setInputFiles('input[type="file"]', sample)
+  await page.setInputFiles('input[accept*="image"]', sample)
 
   const canvas = page.locator('.canvas-viewport')
   await expect(canvas).toBeVisible()

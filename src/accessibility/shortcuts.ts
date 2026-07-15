@@ -17,6 +17,7 @@ export type ShortcutAction =
   | { kind: 'redo' }
   | { kind: 'delete' }
   | { kind: 'duplicate' }
+  | { kind: 'export' }
   | { kind: 'zoomIn' }
   | { kind: 'zoomOut' }
   | { kind: 'fit' }
@@ -45,6 +46,7 @@ export function matchShortcut(event: KeyChord): ShortcutAction | null {
       return event.shiftKey ? { kind: 'redo' } : { kind: 'undo' }
     if (lower === 'y') return { kind: 'redo' }
     if (lower === 'd') return { kind: 'duplicate' }
+    if (lower === 'e') return { kind: 'export' }
     return null
   }
 

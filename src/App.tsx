@@ -4,6 +4,7 @@ import { EditorProvider } from './app/EditorProvider'
 import { EditorShell } from './app/EditorShell'
 import { createProject } from './domain/factories'
 import { loadImageAsset } from './editor/canvas'
+import { importMargem } from './editor/export'
 import {
   clearCurrentProject,
   hasCurrentProject,
@@ -58,6 +59,27 @@ function App() {
     }
     setError(null)
     setProject(created)
+    setPhase('editing')
+  }
+
+  async function handleImportMargem(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    const result = await importMargem(file)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    try {
+      await saveImage(result.imageBlob)
+      await saveProjectData(result.project)
+    } catch {
+      /* segue em memória */
+    }
+    setError(null)
+    setProject(result.project)
     setPhase('editing')
   }
 
@@ -153,15 +175,27 @@ function App() {
           Cole, arraste ou escolha um arquivo PNG, JPEG ou WebP.
         </p>
 
-        <label className="empty-state__button">
-          Escolher imagem
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={handleFile}
-            className="empty-state__input"
-          />
-        </label>
+        <div className="empty-state__choices">
+          <label className="empty-state__button">
+            Escolher imagem
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleFile}
+              className="empty-state__input"
+            />
+          </label>
+
+          <label className="empty-state__link">
+            Abrir projeto .margem
+            <input
+              type="file"
+              accept=".margem,application/json"
+              onChange={handleImportMargem}
+              className="empty-state__input"
+            />
+          </label>
+        </div>
 
         {error && (
           <p role="alert" className="empty-state__error">

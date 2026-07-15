@@ -7,7 +7,7 @@ test('atalhos de teclado: ferramenta, Esc, desfazer e ajuda (WP-06)', async ({
   page,
 }) => {
   await page.goto('/margem/')
-  await page.setInputFiles('input[type="file"]', sample)
+  await page.setInputFiles('input[accept*="image"]', sample)
 
   const canvas = page.locator('.canvas-viewport')
   const box = await canvas.boundingBox()

@@ -1,0 +1,150 @@
+.export-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  z-index: 15;
+}
+
+.export-dialog {
+  background: #ffffff;
+  color: #111111;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  max-width: 26rem;
+  width: 100%;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.export-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.export-dialog__header h2 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.export-dialog__header button {
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: inherit;
+}
+
+.export-dialog__formats {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.export-dialog__formats legend {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  margin-bottom: 0.25rem;
+}
+
+.export-dialog__formats label,
+.export-dialog__option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.export-dialog__option {
+  margin-top: 0.75rem;
+}
+
+.export-dialog__name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
+.export-dialog__name-field {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.export-dialog__name-field input {
+  flex: 1 1 auto;
+  font: inherit;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: inherit;
+}
+
+.export-dialog__error {
+  color: #b43a2c;
+  font-size: 0.85rem;
+  margin: 0.75rem 0 0;
+}
+
+.export-dialog__privacy {
+  font-size: 0.8rem;
+  opacity: 0.65;
+  margin: 1rem 0 0;
+}
+
+.export-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.export-dialog__actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.export-dialog__download {
+  background: #1f6feb;
+  border-color: #1f6feb;
+  color: #ffffff;
+}
+
+.export-dialog__download:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.export-dialog input:focus-visible,
+.export-dialog button:focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .export-dialog {
+    background: #1d1e24;
+    color: #f3f4f6;
+  }
+
+  .export-dialog__name-field input,
+  .export-dialog__actions button {
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+}

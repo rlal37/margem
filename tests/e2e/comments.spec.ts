@@ -7,7 +7,7 @@ test('marcador cria comentário, edita, reordena e sincroniza seleção (WP-05)'
   page,
 }) => {
   await page.goto('/margem/')
-  await page.setInputFiles('input[type="file"]', sample)
+  await page.setInputFiles('input[accept*="image"]', sample)
 
   const canvas = page.locator('.canvas-viewport')
   const box = await canvas.boundingBox()

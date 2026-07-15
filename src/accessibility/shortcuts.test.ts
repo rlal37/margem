@@ -39,9 +39,12 @@ describe('matchShortcut', () => {
     })
   })
 
-  it('duplica com Ctrl/Cmd+D', () => {
+  it('duplica com Ctrl/Cmd+D e exporta com Ctrl/Cmd+E', () => {
     expect(matchShortcut(chord({ key: 'd', ctrlKey: true }))).toEqual({
       kind: 'duplicate',
+    })
+    expect(matchShortcut(chord({ key: 'e', ctrlKey: true }))).toEqual({
+      kind: 'export',
     })
   })
 
