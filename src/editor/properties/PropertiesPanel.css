@@ -1,0 +1,111 @@
+.properties-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0.75rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.properties-panel__title {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.properties-panel__group {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.properties-panel__group legend {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  padding: 0 0.25rem;
+}
+
+.properties-panel__field {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+.properties-panel__field input[type='number'] {
+  width: 4rem;
+}
+
+.properties-panel__field input[type='text'] {
+  flex: 1 1 auto;
+  min-width: 6rem;
+}
+
+.properties-panel__swatches {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.properties-panel__swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.properties-panel__swatch[aria-pressed='true'] {
+  border-color: currentColor;
+  box-shadow: 0 0 0 2px #1f6feb;
+}
+
+.properties-panel__segmented {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.properties-panel__segmented button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.properties-panel__segmented button[aria-pressed='true'] {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 1px #1f6feb;
+}
+
+.properties-panel__delete {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: #b43a2c;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.properties-panel :focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: 1px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .properties-panel__group,
+  .properties-panel__segmented button,
+  .properties-panel__delete {
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+}

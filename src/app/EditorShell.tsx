@@ -15,6 +15,7 @@ import {
 } from '../editor/canvas'
 import { ToolRail, useCanvasTools } from '../editor/tools'
 import { CommentsPanel } from '../editor/comments'
+import { PropertiesPanel } from '../editor/properties'
 import { ExportDialog } from '../editor/export'
 import {
   ANNOUNCE,
@@ -254,17 +255,25 @@ export function EditorShell({ onNewProject }: EditorShellProps) {
             selectedId={selectedId}
             onSelect={(id) => store.select(id)}
           />
-          <CommentsPanel
-            comments={project.comments}
-            activeMarkerId={selectedId}
-            onUpdate={(c) => store.updateComment(c)}
-            onReorder={(ids) => store.reorderComments(ids)}
-            onDelete={(c) =>
-              c.markerAnnotationId &&
-              store.deleteAnnotation(c.markerAnnotationId)
-            }
-            onFocus={focusComment}
-          />
+          {selected && selected.type !== 'marker' ? (
+            <PropertiesPanel
+              annotation={selected}
+              onChange={(next, label) => store.updateAnnotation(next, label)}
+              onDelete={() => store.deleteSelected()}
+            />
+          ) : (
+            <CommentsPanel
+              comments={project.comments}
+              activeMarkerId={selectedId}
+              onUpdate={(c) => store.updateComment(c)}
+              onReorder={(ids) => store.reorderComments(ids)}
+              onDelete={(c) =>
+                c.markerAnnotationId &&
+                store.deleteAnnotation(c.markerAnnotationId)
+              }
+              onFocus={focusComment}
+            />
+          )}
         </div>
       </div>
 

@@ -113,6 +113,16 @@ export class EditorStore {
     this.emit()
   }
 
+  /**
+   * Substitui uma anotação por uma versão editada (estilo, texto, posição
+   * numérica — RF-027, RF-028, seção 12.2). Reversível. Ignora se o id sumiu.
+   */
+  updateAnnotation(next: Annotation, label?: string): void {
+    if (!this.history.state.annotations.some((a) => a.id === next.id)) return
+    this.history.execute(new ReplaceAnnotationCommand(next, label))
+    this.emit()
+  }
+
   /** Reordena comentários e renumera marcadores (RF-043). */
   reorderComments(orderedIds: readonly string[]): void {
     this.history.execute(new ReorderCommentsCommand(orderedIds))

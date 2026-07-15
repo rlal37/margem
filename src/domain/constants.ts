@@ -37,8 +37,14 @@ export const DEFAULT_STROKE_WIDTH = 3
 /** Opacidade padrão de preenchimento/área. */
 export const DEFAULT_OPACITY = 1
 
-/** Tamanho de texto padrão no canvas. */
-export const DEFAULT_FONT_SIZE = 16
+/**
+ * Dois tamanhos de texto no canvas (decisão do Apêndice C): pequeno e grande,
+ * em pixels de imagem a 100%. Editáveis no painel de propriedades.
+ */
+export const TEXT_SIZES = { small: 16, large: 28 } as const
+
+/** Tamanho de texto padrão no canvas (o menor). */
+export const DEFAULT_FONT_SIZE = TEXT_SIZES.small
 
 /** Símbolo do marcador sem categoria (aparência neutra). */
 export const DEFAULT_MARKER_SYMBOL: MarkerSymbol = 'circle'

@@ -183,6 +183,39 @@ describe('EditorStore', () => {
     expect(s.getSnapshot().canUndo).toBe(true) // ainda só a criação
   })
 
+  it('atualiza estilo/geometria de anotação de forma reversível (RF-027/028)', () => {
+    const s = store()
+    s.execute(
+      new AddAnnotationCommand(
+        createArea(
+          { x: 0.1, y: 0.1, width: 0.2, height: 0.2 },
+          { id: 'a1', color: '#B43A2C' },
+        ),
+      ),
+    )
+    const original = s.getSnapshot().project.annotations[0]
+    if (original?.type !== 'area') throw new Error('esperava área')
+    s.updateAnnotation({
+      ...original,
+      style: { ...original.style, color: '#1F6FEB' },
+    })
+
+    const edited = s.getSnapshot().project.annotations[0]
+    if (edited?.type === 'area') expect(edited.style.color).toBe('#1F6FEB')
+
+    s.undo()
+    const back = s.getSnapshot().project.annotations[0]
+    if (back?.type === 'area') expect(back.style.color).toBe('#B43A2C')
+  })
+
+  it('updateAnnotation ignora id inexistente', () => {
+    const s = store()
+    s.updateAnnotation(
+      createArea({ x: 0, y: 0, width: 0.1, height: 0.1 }, { id: 'ghost' }),
+    )
+    expect(s.getSnapshot().canUndo).toBe(false)
+  })
+
   it('reordena comentários e renumera marcadores (RF-043)', () => {
     const s = store()
     const first = createMarkerWithComment(
