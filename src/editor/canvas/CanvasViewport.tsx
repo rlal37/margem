@@ -1,13 +1,14 @@
 /**
  * Área de trabalho: renderiza a imagem-base em SVG e aplica a transformação
- * do viewport (RF-010, RF-014). Suporta zoom por roda com modificador
- * (RF-011), pan por arraste (RF-012) e reajuste ao redimensionar quando em
- * modo "ajustar à tela". Os limites da imagem ficam visíveis contra a área
- * externa do canvas (RF-015).
+ * do viewport (RF-010, RF-014). Zoom por roda com modificador (RF-011); pan
+ * por arraste quando a ferramenta Mover está ativa (RF-012); reajuste ao
+ * redimensionar em modo "ajustar" (RNF-007); limites da imagem visíveis
+ * (RF-015).
  *
- * O componente é controlado: recebe `viewport` e emite `onViewportChange`.
- * Zoom/ajuste/100% são expostos por um handle imperativo para a barra
- * superior (WP posterior) acionar. Atalhos de teclado completos são WP-09.
+ * Para as demais ferramentas, os eventos de ponteiro são convertidos para
+ * pixels da imagem e repassados via callbacks — a lógica de cada ferramenta
+ * vive em `useCanvasTools`. O conteúdo (`children`) é renderizado dentro do
+ * mesmo grupo transformado, em coordenadas de pixel da imagem.
  */
 
 import {
@@ -19,15 +20,17 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   type WheelEvent as ReactWheelEvent,
 } from 'react'
-import type { PixelSize } from '../../domain/geometry'
-import type { ImageAsset, Viewport } from '../../domain/types'
+import type { PixelPoint, PixelSize } from '../../domain/geometry'
+import type { ImageAsset, ToolId, Viewport } from '../../domain/types'
 import './CanvasViewport.css'
 import {
   actualViewport,
   fitViewport,
   panBy,
+  screenToImage,
   zoomBy,
   ZOOM_STEP,
   type ViewportTransform,
@@ -44,19 +47,45 @@ interface CanvasViewportProps {
   image: ImageAsset
   viewport: Viewport
   onViewportChange(next: Viewport): void
+  activeTool: ToolId
+  onToolPointerDown?(imagePoint: PixelPoint): void
+  onToolPointerMove?(imagePoint: PixelPoint): void
+  onToolPointerUp?(imagePoint: PixelPoint): void
+  children?: ReactNode
 }
 
 function toTransform(viewport: Viewport): ViewportTransform {
   return { zoom: viewport.zoom, panX: viewport.panX, panY: viewport.panY }
 }
 
+const CREATE_TOOLS: ReadonlySet<ToolId> = new Set([
+  'marker',
+  'area',
+  'arrow',
+  'draw',
+  'text',
+])
+
 export const CanvasViewport = forwardRef<
   CanvasViewportHandle,
   CanvasViewportProps
->(function CanvasViewport({ image, viewport, onViewportChange }, ref) {
+>(function CanvasViewport(
+  {
+    image,
+    viewport,
+    onViewportChange,
+    activeTool,
+    onToolPointerDown,
+    onToolPointerMove,
+    onToolPointerUp,
+    children,
+  },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<PixelSize>({ width: 0, height: 0 })
-  const dragRef = useRef<{ x: number; y: number } | null>(null)
+  const panRef = useRef<{ x: number; y: number } | null>(null)
+  const toolGestureRef = useRef(false)
 
   const imageSize: PixelSize = useMemo(
     () => ({ width: image.width, height: image.height }),
@@ -70,7 +99,6 @@ export const CanvasViewport = forwardRef<
     [onViewportChange],
   )
 
-  // Mede o contêiner e reage a redimensionamentos (RNF-007).
   useEffect(() => {
     const node = containerRef.current
     if (!node) return
@@ -85,7 +113,6 @@ export const CanvasViewport = forwardRef<
     return () => observer.disconnect()
   }, [])
 
-  // Em modo "ajustar", recalcula o enquadramento sempre que a área muda.
   useEffect(() => {
     if (viewport.fitMode !== 'fit') return
     if (size.width === 0 || size.height === 0) return
@@ -128,6 +155,18 @@ export const CanvasViewport = forwardRef<
     [viewport, size, imageSize, focalCenter, emit],
   )
 
+  const toImagePoint = useCallback(
+    (clientX: number, clientY: number): PixelPoint | null => {
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (!rect) return null
+      return screenToImage(toTransform(viewport), {
+        x: clientX - rect.left,
+        y: clientY - rect.top,
+      })
+    },
+    [viewport],
+  )
+
   const handleWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
     if (!event.ctrlKey && !event.metaKey) return
     event.preventDefault()
@@ -140,36 +179,63 @@ export const CanvasViewport = forwardRef<
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return
-    dragRef.current = { x: event.clientX, y: event.clientY }
     event.currentTarget.setPointerCapture(event.pointerId)
+
+    if (activeTool === 'pan') {
+      panRef.current = { x: event.clientX, y: event.clientY }
+      return
+    }
+    const point = toImagePoint(event.clientX, event.clientY)
+    if (!point) return
+    toolGestureRef.current = true
+    onToolPointerDown?.(point)
   }
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const start = dragRef.current
-    if (!start) return
-    const dx = event.clientX - start.x
-    const dy = event.clientY - start.y
-    dragRef.current = { x: event.clientX, y: event.clientY }
-    emit(panBy(toTransform(viewport), dx, dy), 'actual')
+    if (panRef.current) {
+      const dx = event.clientX - panRef.current.x
+      const dy = event.clientY - panRef.current.y
+      panRef.current = { x: event.clientX, y: event.clientY }
+      emit(panBy(toTransform(viewport), dx, dy), 'actual')
+      return
+    }
+    if (!toolGestureRef.current) return
+    const point = toImagePoint(event.clientX, event.clientY)
+    if (point) onToolPointerMove?.(point)
   }
 
-  const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (dragRef.current === null) return
-    dragRef.current = null
+  const endGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
+    if (panRef.current) {
+      panRef.current = null
+      return
+    }
+    if (toolGestureRef.current) {
+      toolGestureRef.current = false
+      const point = toImagePoint(event.clientX, event.clientY)
+      if (point) onToolPointerUp?.(point)
+    }
   }
+
+  const cursor =
+    activeTool === 'pan'
+      ? 'grab'
+      : CREATE_TOOLS.has(activeTool)
+        ? 'crosshair'
+        : 'default'
 
   return (
     <div
       ref={containerRef}
       className="canvas-viewport"
+      style={{ cursor }}
       onWheel={handleWheel}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
+      onPointerUp={endGesture}
+      onPointerCancel={endGesture}
     >
       <svg
         className="canvas-viewport__svg"
@@ -185,7 +251,6 @@ export const CanvasViewport = forwardRef<
             href={image.source}
             width={image.width}
             height={image.height}
-            // Preserva nitidez de bordas ao ampliar bitmaps.
             style={{ imageRendering: 'auto' }}
           />
           <rect
@@ -197,6 +262,7 @@ export const CanvasViewport = forwardRef<
             fill="none"
             vectorEffect="non-scaling-stroke"
           />
+          {children}
         </g>
       </svg>
     </div>

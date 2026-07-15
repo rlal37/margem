@@ -1,0 +1,46 @@
+.tool-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  flex: 0 0 auto;
+}
+
+.tool-rail__button {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.tool-rail__button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.tool-rail__button[aria-pressed='true'] {
+  background: #1f6feb;
+  color: #ffffff;
+}
+
+.tool-rail__button:focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tool-rail {
+    border-right-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .tool-rail__button:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}

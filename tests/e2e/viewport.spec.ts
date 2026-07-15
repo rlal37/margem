@@ -15,8 +15,9 @@ test('carrega imagem-base e permite ampliar', async ({ page }) => {
   const imageEl = canvas.locator('image')
   await expect(imageEl).toHaveAttribute('href', /^blob:/)
 
-  // RF-011/RF-013: ampliar altera a transformação do grupo.
-  const group = canvas.locator('g')
+  // RF-011/RF-013: ampliar altera a transformação do grupo (o primeiro <g>
+  // é o grupo do viewport; o segundo é a camada de anotações).
+  const group = canvas.locator('g').first()
   const before = await group.getAttribute('transform')
   await page.getByRole('button', { name: 'Aumentar zoom' }).click()
   await expect(group).not.toHaveAttribute('transform', before ?? '')

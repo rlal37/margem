@@ -1,24 +1,16 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useMemo, useState, type ChangeEvent } from 'react'
 import './App.css'
-import {
-  CanvasViewport,
-  loadImageAsset,
-  type CanvasViewportHandle,
-} from './editor/canvas'
-import type { ImageAsset, Viewport } from './domain/types'
-
-const INITIAL_VIEWPORT: Viewport = {
-  zoom: 1,
-  panX: 0,
-  panY: 0,
-  fitMode: 'fit',
-}
+import { EditorProvider } from './app/EditorProvider'
+import { EditorShell } from './app/EditorShell'
+import { createProject } from './domain/factories'
+import { loadImageAsset } from './editor/canvas'
+import type { ImageAsset } from './domain/types'
 
 function App() {
   const [image, setImage] = useState<ImageAsset | null>(null)
-  const [viewport, setViewport] = useState<Viewport>(INITIAL_VIEWPORT)
   const [error, setError] = useState<string | null>(null)
-  const canvasRef = useRef<CanvasViewportHandle>(null)
+
+  const project = useMemo(() => (image ? createProject(image) : null), [image])
 
   async function handleFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -29,13 +21,12 @@ function App() {
     if (result.ok) {
       setError(null)
       setImage(result.asset)
-      setViewport(INITIAL_VIEWPORT)
     } else {
       setError(result.error)
     }
   }
 
-  if (!image) {
+  if (!project) {
     return (
       <main className="empty-state">
         <div className="empty-state__card">
@@ -71,34 +62,9 @@ function App() {
   }
 
   return (
-    <div className="editor">
-      <header className="editor__bar">
-        <span className="editor__title">{image.originalName}</span>
-        <div className="editor__zoom" role="group" aria-label="Zoom">
-          <button type="button" onClick={() => canvasRef.current?.zoomOut()}>
-            Diminuir zoom
-          </button>
-          <button type="button" onClick={() => canvasRef.current?.zoomIn()}>
-            Aumentar zoom
-          </button>
-          <button type="button" onClick={() => canvasRef.current?.fit()}>
-            Ajustar à tela
-          </button>
-          <button type="button" onClick={() => canvasRef.current?.actual()}>
-            100%
-          </button>
-        </div>
-      </header>
-
-      <main className="editor__canvas">
-        <CanvasViewport
-          ref={canvasRef}
-          image={image}
-          viewport={viewport}
-          onViewportChange={setViewport}
-        />
-      </main>
-    </div>
+    <EditorProvider project={project}>
+      <EditorShell />
+    </EditorProvider>
   )
 }
 

@@ -41,6 +41,17 @@ export class ProjectHistory {
     return this.current
   }
 
+  /**
+   * Substitui o estado atual sem registrar no histórico. Reservado a campos
+   * não editáveis por undo/redo — viewport, título e preferências (RF-050
+   * cobre anotações e comentários, não a navegação). Os comandos só revertem
+   * anotações/comentários, então esses campos apenas acompanham o estado.
+   */
+  replace(next: Project): Project {
+    this.current = next
+    return this.current
+  }
+
   get canUndo(): boolean {
     return this.undoStack.length > 0
   }
