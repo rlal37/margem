@@ -8,7 +8,7 @@
  * (seção 9.2).
  */
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { EditorStore } from '../../app/editorStore'
 import { DEFAULT_FONT_SIZE } from '../../domain/constants'
 import {
@@ -73,6 +73,8 @@ export interface CanvasToolsResult {
   setTextValue(value: string): void
   commitText(): void
   cancelText(): void
+  /** Cancela criação/edição em andamento; retorna se havia algo (Esc). */
+  cancelGesture(): boolean
 }
 
 export function useCanvasTools(
@@ -83,6 +85,20 @@ export function useCanvasTools(
 ): CanvasToolsResult {
   const [gesture, setGesture] = useState<Gesture>({ kind: 'none' })
   const [textEditor, setTextEditor] = useState<TextEditorState | null>(null)
+
+  // Espelhos do estado para leitura síncrona em cancelGesture (evento Esc).
+  const gestureRef = useRef(gesture)
+  gestureRef.current = gesture
+  const textEditorRef = useRef(textEditor)
+  textEditorRef.current = textEditor
+
+  const cancelGesture = useCallback((): boolean => {
+    const wasActive =
+      gestureRef.current.kind !== 'none' || textEditorRef.current !== null
+    setGesture({ kind: 'none' })
+    setTextEditor(null)
+    return wasActive
+  }, [])
 
   const toNorm = useCallback(
     (point: PixelPoint): NormalizedPoint => ({
@@ -262,6 +278,7 @@ export function useCanvasTools(
     setTextValue,
     commitText,
     cancelText,
+    cancelGesture,
   }
 }
 

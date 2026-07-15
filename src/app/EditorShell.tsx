@@ -1,12 +1,10 @@
 /**
  * Shell do editor (seção 6.2): barra superior, barra de ferramentas e canvas.
- * Liga o store às ferramentas, à camada de anotações e aos controles.
- *
- * Exclusão por Delete e undo/redo por Ctrl/Cmd atendem o essencial; o
- * conjunto completo de atalhos e o painel de comentários são WPs seguintes.
+ * Liga o store às ferramentas, à camada de anotações e aos controles, e
+ * instala os atalhos de teclado (WP-06).
  */
 
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   AnnotationLayer,
   CanvasViewport,
@@ -16,49 +14,28 @@ import {
 } from '../editor/canvas'
 import { ToolRail, useCanvasTools } from '../editor/tools'
 import { CommentsPanel } from '../editor/comments'
+import { useKeyboardShortcuts } from '../accessibility'
+import { ShortcutHelp } from '../ui/ShortcutHelp'
 import type { Annotation, Comment } from '../domain/types'
 import { useEditor } from './editorContext'
 import './EditorShell.css'
-
-function isEditingText(): boolean {
-  const el = document.activeElement
-  return (
-    el instanceof HTMLInputElement ||
-    el instanceof HTMLTextAreaElement ||
-    (el instanceof HTMLElement && el.isContentEditable)
-  )
-}
 
 export function EditorShell() {
   const { project, tool, selectedId, canUndo, canRedo, store } = useEditor()
   const canvasRef = useRef<CanvasViewportHandle>(null)
   const textInputRef = useRef<HTMLInputElement>(null)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const imageSize = { width: project.image.width, height: project.image.height }
   const tools = useCanvasTools(store, project, imageSize, project.viewport.zoom)
 
-  // Delete exclui a seleção; Ctrl/Cmd+Z desfaz, +Shift refaz (fora de campos).
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (isEditingText()) return
-      const mod = event.ctrlKey || event.metaKey
-      if (mod && event.key.toLowerCase() === 'z') {
-        event.preventDefault()
-        if (event.shiftKey) store.redo()
-        else store.undo()
-        return
-      }
-      if (
-        (event.key === 'Delete' || event.key === 'Backspace') &&
-        selectedId !== null
-      ) {
-        event.preventDefault()
-        store.deleteSelected()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [store, selectedId])
+  const toggleHelp = useCallback(() => setHelpOpen((open) => !open), [])
+  useKeyboardShortcuts({
+    store,
+    canvas: canvasRef,
+    cancelGesture: tools.cancelGesture,
+    onToggleHelp: toggleHelp,
+  })
 
   // Foca o editor de texto assim que ele aparece (sem prop autoFocus).
   const isEditingTextAnnotation = tools.textEditor !== null
@@ -99,6 +76,7 @@ export function EditorShell() {
               type="button"
               onClick={() => store.undo()}
               disabled={!canUndo}
+              title="Desfazer (Ctrl/Cmd+Z)"
             >
               Desfazer
             </button>
@@ -106,24 +84,49 @@ export function EditorShell() {
               type="button"
               onClick={() => store.redo()}
               disabled={!canRedo}
+              title="Refazer (Ctrl/Cmd+Shift+Z)"
             >
               Refazer
             </button>
           </div>
           <div role="group" aria-label="Zoom">
-            <button type="button" onClick={() => canvasRef.current?.zoomOut()}>
+            <button
+              type="button"
+              onClick={() => canvasRef.current?.zoomOut()}
+              title="Diminuir zoom (−)"
+            >
               Diminuir zoom
             </button>
-            <button type="button" onClick={() => canvasRef.current?.zoomIn()}>
+            <button
+              type="button"
+              onClick={() => canvasRef.current?.zoomIn()}
+              title="Aumentar zoom (+)"
+            >
               Aumentar zoom
             </button>
-            <button type="button" onClick={() => canvasRef.current?.fit()}>
+            <button
+              type="button"
+              onClick={() => canvasRef.current?.fit()}
+              title="Ajustar à tela (0)"
+            >
               Ajustar à tela
             </button>
-            <button type="button" onClick={() => canvasRef.current?.actual()}>
+            <button
+              type="button"
+              onClick={() => canvasRef.current?.actual()}
+              title="100% (1)"
+            >
               100%
             </button>
           </div>
+          <button
+            type="button"
+            onClick={toggleHelp}
+            title="Ajuda e atalhos (?)"
+            aria-haspopup="dialog"
+          >
+            Ajuda
+          </button>
         </div>
       </header>
 
@@ -200,6 +203,8 @@ export function EditorShell() {
           onFocus={focusComment}
         />
       </div>
+
+      <ShortcutHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   )
 }

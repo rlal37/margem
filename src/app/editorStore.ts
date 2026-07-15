@@ -9,13 +9,25 @@
 
 import { ProjectHistory } from '../editor/history/command'
 import {
+  AddAnnotationCommand,
+  AddMarkerCommand,
   RemoveAnnotationCommand,
   RemoveMarkerCommand,
   ReorderCommentsCommand,
   UpdateCommentCommand,
 } from '../editor/history/commands'
 import type { Command } from '../editor/history/command'
-import type { Comment, Project, ToolId, Viewport } from '../domain/types'
+import { createMarkerWithComment } from '../domain/factories'
+import { newId } from '../domain/ids'
+import { moveAnnotation } from '../editor/tools/tools'
+import type {
+  Annotation,
+  Comment,
+  MarkerAnnotation,
+  Project,
+  ToolId,
+  Viewport,
+} from '../domain/types'
 
 export interface EditorSnapshot {
   project: Project
@@ -124,6 +136,46 @@ export class EditorStore {
 
   deleteSelected(): void {
     if (this.selectedId !== null) this.deleteAnnotation(this.selectedId)
+  }
+
+  /**
+   * Duplica a anotação selecionada, deslocada, e seleciona a cópia (RF-029).
+   * Duplicar um marcador cria também um novo comentário vinculado (RF-040).
+   */
+  duplicateSelected(): void {
+    const id = this.selectedId
+    if (id === null) return
+    const project = this.history.state
+    const source = project.annotations.find((a) => a.id === id)
+    if (!source) return
+
+    const offset = 0.02
+    const nextZ =
+      project.annotations.reduce((max, a) => Math.max(max, a.zIndex), 0) + 1
+
+    if (source.type === 'marker') {
+      const moved = moveAnnotation(source, offset, offset) as MarkerAnnotation
+      const { annotation, comment } = createMarkerWithComment(
+        moved.geometry.point,
+        {
+          color: source.style.color,
+          symbol: source.style.symbol,
+          order: project.comments.length + 1,
+          zIndex: nextZ,
+        },
+      )
+      this.history.execute(new AddMarkerCommand(annotation, comment))
+      this.selectedId = annotation.id
+    } else {
+      const clone: Annotation = {
+        ...moveAnnotation(source, offset, offset),
+        id: newId(),
+        zIndex: nextZ,
+      }
+      this.history.execute(new AddAnnotationCommand(clone))
+      this.selectedId = clone.id
+    }
+    this.emit()
   }
 
   /** Limpa a seleção se o objeto não existe mais (após undo/redo). */

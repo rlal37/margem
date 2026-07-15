@@ -110,6 +110,37 @@ describe('EditorStore', () => {
     expect(s.getSnapshot().project.comments[0]?.title).toBe('')
   })
 
+  it('duplica anotação livre e seleciona a cópia (RF-029)', () => {
+    const s = store()
+    s.execute(
+      new AddAnnotationCommand(
+        createArea({ x: 0.1, y: 0.1, width: 0.2, height: 0.2 }, { id: 'a1' }),
+      ),
+    )
+    s.select('a1')
+    s.duplicateSelected()
+
+    const annotations = s.getSnapshot().project.annotations
+    expect(annotations).toHaveLength(2)
+    const copyId = s.getSnapshot().selectedId
+    expect(copyId).not.toBe('a1')
+    expect(annotations.some((a) => a.id === copyId)).toBe(true)
+  })
+
+  it('duplica marcador criando novo comentário vinculado', () => {
+    const s = store()
+    const { annotation, comment } = createMarkerWithComment(
+      { x: 0.5, y: 0.5 },
+      { id: 'm1', order: 1 },
+    )
+    s.execute(new AddMarkerCommand(annotation, comment))
+    s.select('m1')
+    s.duplicateSelected()
+
+    expect(s.getSnapshot().project.annotations).toHaveLength(2)
+    expect(s.getSnapshot().project.comments).toHaveLength(2)
+  })
+
   it('reordena comentários e renumera marcadores (RF-043)', () => {
     const s = store()
     const first = createMarkerWithComment(
