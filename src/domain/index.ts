@@ -1,0 +1,8 @@
+/** Camada de domínio: tipos, validação e regras puras (seção 14.2). */
+export * from './types'
+export * from './geometry'
+export * from './constants'
+export * from './ids'
+export * from './numbering'
+export * from './factories'
+export * from './validation'
