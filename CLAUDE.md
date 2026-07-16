@@ -70,11 +70,20 @@ tests/
 
 ## Estado atual (2026-07-15)
 
-**WP-01 a WP-10 concluídos, verificados e no ar.** Repositório
-`rlal37/margem` (branch `master`), publicado por GitHub Actions em
+**WP-01 a WP-10 concluídos; WP-11 em andamento (parte de engenharia feita).**
+Repositório `rlal37/margem` (branch `master`), publicado por GitHub Actions em
 `https://rlal37.github.io/margem/`. CI roda lint + format:check + test +
-build + e2e; deploy automático no push. **Próximo: WP-11 QA e lançamento**
-(cross-browser, performance, checklist do Apêndice D).
+build + e2e (Chromium); deploy automático no push.
+
+**WP-11 — feito (engenharia/QA automatizável):** e2e do CA-14 (atalho não
+dispara em campo), limites de arquivo e erros conhecidos no README, correção do
+CA-15 (falha de gravação da imagem não é mais silenciosa — `storageOk`/
+`useAutosave(enabled)`). **Cross-browser:** e2e só no Chromium é o gate
+confiável — Firefox não lança neste ambiente e o WebKit do Playwright não grava
+Blob no IndexedDB (limitação de infra, não bug do Safari real; provado por
+round-trip cru). **Resta (gate humano):** teste com 5 pessoas, leitor de tela
+real, cross-browser manual (Safari/Firefox reais), publicar link na Oficina
+Digital, conferir deploy.
 
 O fluxo principal do MVP funciona ponta a ponta: importar imagem (escolher,
 colar ou arrastar) → anotar (marcador/área/seta/desenho/texto) → comentar →
