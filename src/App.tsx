@@ -20,6 +20,7 @@ import {
 } from './storage'
 import { ConfirmDialog } from './ui/ConfirmDialog'
 import { AboutDialog } from './ui/AboutDialog'
+import { Logo } from './ui/icons'
 import type { Project } from './domain/types'
 
 type Phase = 'loading' | 'empty' | 'recovery' | 'editing'
@@ -243,7 +244,10 @@ function App() {
         onDrop={handleDrop}
       >
         <div className="empty-state__card">
-          <p className="empty-state__brand">Margem</p>
+          <div className="empty-state__brand">
+            <Logo size={52} className="empty-state__logo" />
+            <span className="empty-state__wordmark">Margem</span>
+          </div>
           <h1 className="empty-state__title">
             Traga uma imagem para a margem.
           </h1>
