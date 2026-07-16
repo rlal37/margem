@@ -25,6 +25,19 @@ import {
 } from '../accessibility'
 import { ShortcutHelp } from '../ui/ShortcutHelp'
 import { AboutDialog } from '../ui/AboutDialog'
+import {
+  IconAbout,
+  IconActual,
+  IconExport,
+  IconFit,
+  IconHelp,
+  IconNew,
+  IconRedo,
+  IconUndo,
+  IconZoomIn,
+  IconZoomOut,
+  Logo,
+} from '../ui/icons'
 import type { Annotation, Comment } from '../domain/types'
 import { useEditor } from './editorContext'
 import { useAutosave, type SaveStatus } from './useAutosave'
@@ -113,8 +126,20 @@ export function EditorShell({
     <div className="editor">
       <header className="editor__bar">
         <div className="editor__meta">
-          <span className="editor__brand">Margem</span>
-          <span className="editor__title">{project.image.originalName}</span>
+          <span className="editor__brand">
+            <Logo size={22} />
+            <span className="editor__wordmark">Margem</span>
+          </span>
+          <input
+            className="editor__name"
+            aria-label="Nome do projeto"
+            placeholder="Nome do projeto"
+            value={project.title}
+            onChange={(e) => store.setTitle(e.target.value)}
+          />
+          <span className="editor__file" title={project.image.originalName}>
+            {project.image.originalName}
+          </span>
           <span
             className={`editor__save editor__save--${saveStatus}`}
             role="status"
@@ -125,6 +150,7 @@ export function EditorShell({
         </div>
         <div className="editor__actions">
           <button type="button" onClick={onNewProject} title="Novo projeto">
+            <IconNew size={16} />
             Novo projeto
           </button>
           <button
@@ -132,6 +158,7 @@ export function EditorShell({
             onClick={openExport}
             title="Exportar (Ctrl/Cmd+E)"
           >
+            <IconExport size={16} />
             Exportar
           </button>
           <div role="group" aria-label="Histórico">
@@ -141,6 +168,7 @@ export function EditorShell({
               disabled={!canUndo}
               title="Desfazer (Ctrl/Cmd+Z)"
             >
+              <IconUndo size={16} />
               Desfazer
             </button>
             <button
@@ -149,6 +177,7 @@ export function EditorShell({
               disabled={!canRedo}
               title="Refazer (Ctrl/Cmd+Shift+Z)"
             >
+              <IconRedo size={16} />
               Refazer
             </button>
           </div>
@@ -158,6 +187,7 @@ export function EditorShell({
               onClick={() => canvasRef.current?.zoomOut()}
               title="Diminuir zoom (−)"
             >
+              <IconZoomOut size={16} />
               Diminuir zoom
             </button>
             <button
@@ -165,6 +195,7 @@ export function EditorShell({
               onClick={() => canvasRef.current?.zoomIn()}
               title="Aumentar zoom (+)"
             >
+              <IconZoomIn size={16} />
               Aumentar zoom
             </button>
             <button
@@ -172,6 +203,7 @@ export function EditorShell({
               onClick={() => canvasRef.current?.fit()}
               title="Ajustar à tela (0)"
             >
+              <IconFit size={16} />
               Ajustar à tela
             </button>
             <button
@@ -179,6 +211,7 @@ export function EditorShell({
               onClick={() => canvasRef.current?.actual()}
               title="100% (1)"
             >
+              <IconActual size={16} />
               100%
             </button>
           </div>
@@ -188,6 +221,7 @@ export function EditorShell({
             title="Ajuda e atalhos (?)"
             aria-haspopup="dialog"
           >
+            <IconHelp size={16} />
             Ajuda
           </button>
           <button
@@ -196,6 +230,7 @@ export function EditorShell({
             title="Sobre a Margem"
             aria-haspopup="dialog"
           >
+            <IconAbout size={16} />
             Sobre
           </button>
         </div>

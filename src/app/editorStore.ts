@@ -107,6 +107,13 @@ export class EditorStore {
     this.emit()
   }
 
+  /** Define o nome do projeto (metadado; não entra no histórico). */
+  setTitle(title: string): void {
+    if (this.history.state.title === title) return
+    this.history.replace({ ...this.history.state, title })
+    this.emit()
+  }
+
   /** Edita um comentário (título, descrição, categoria — RF-041, RF-042). */
   updateComment(next: Comment): void {
     this.history.execute(new UpdateCommentCommand(next))

@@ -53,6 +53,13 @@ describe('EditorStore', () => {
     expect(s.getSnapshot().canUndo).toBe(false)
   })
 
+  it('define o nome do projeto sem entrar no histórico', () => {
+    const s = store()
+    s.setTitle('Revisão da home')
+    expect(s.getSnapshot().project.title).toBe('Revisão da home')
+    expect(s.getSnapshot().canUndo).toBe(false)
+  })
+
   it('viewport não entra no histórico', () => {
     const s = store()
     s.setViewport({ zoom: 2, panX: 5, panY: 5, fitMode: 'actual' })
