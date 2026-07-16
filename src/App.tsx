@@ -31,6 +31,9 @@ function App() {
   const [confirmNew, setConfirmNew] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [dragActive, setDragActive] = useState(false)
+  // Falso quando a imagem-base não pôde ser guardada localmente (ex.: Safari em
+  // navegação privada): a sessão segue em memória, mas não é recuperável.
+  const [storageOk, setStorageOk] = useState(true)
 
   // Na abertura, verifica se há um projeto recuperável (RF-054, seção 7.6).
   useEffect(() => {
@@ -57,13 +60,24 @@ function App() {
     }
 
     const created = createProject(result.asset)
-    // Falha de persistência não impede editar em memória (RNF-004).
+    // A imagem é o dado que torna a sessão recuperável. Se ela não puder ser
+    // guardada, não gravamos o JSON (evita oferecer recuperação sem imagem) e
+    // sinalizamos armazenamento degradado — a sessão segue em memória (RNF-004,
+    // CA-15) e a interface recomenda baixar uma cópia.
+    let imageSaved = true
     try {
       await saveImage(file)
-      await saveProjectData(created)
     } catch {
-      /* segue em memória; o autosave tentará novamente */
+      imageSaved = false
     }
+    if (imageSaved) {
+      try {
+        await saveProjectData(created)
+      } catch {
+        /* o autosave tentará novamente */
+      }
+    }
+    setStorageOk(imageSaved)
     setError(null)
     setProject(created)
     setPhase('editing')
@@ -109,12 +123,20 @@ function App() {
       setError(result.error)
       return
     }
+    let imageSaved = true
     try {
       await saveImage(result.imageBlob)
-      await saveProjectData(result.project)
     } catch {
-      /* segue em memória */
+      imageSaved = false
     }
+    if (imageSaved) {
+      try {
+        await saveProjectData(result.project)
+      } catch {
+        /* o autosave tentará novamente */
+      }
+    }
+    setStorageOk(imageSaved)
     setError(null)
     setProject(result.project)
     setPhase('editing')
@@ -123,6 +145,8 @@ function App() {
   async function continueRecovery() {
     const loaded = await loadCurrentProject()
     if (loaded) {
+      // Recuperou do IndexedDB: o armazenamento funciona nesta sessão.
+      setStorageOk(true)
       setProject(loaded.project)
       setPhase('editing')
     } else {
@@ -152,7 +176,10 @@ function App() {
     return (
       <>
         <EditorProvider project={project}>
-          <EditorShell onNewProject={() => setConfirmNew(true)} />
+          <EditorShell
+            onNewProject={() => setConfirmNew(true)}
+            storageOk={storageOk}
+          />
         </EditorProvider>
         <ConfirmDialog
           open={confirmNew}

@@ -33,21 +33,26 @@ import './EditorShell.css'
 const SAVE_LABEL: Record<SaveStatus, string> = {
   saving: 'Salvando…',
   saved: 'Salvo neste navegador',
-  error: 'Falha ao salvar. Baixe uma cópia.',
+  error: 'Não foi possível guardar aqui. Baixe uma cópia (.margem).',
 }
 
 interface EditorShellProps {
   onNewProject(): void
+  /** Falso quando o armazenamento local está degradado (imagem não guardada). */
+  storageOk?: boolean
 }
 
-export function EditorShell({ onNewProject }: EditorShellProps) {
+export function EditorShell({
+  onNewProject,
+  storageOk = true,
+}: EditorShellProps) {
   const { project, tool, selectedId, canUndo, canRedo, store } = useEditor()
   const canvasRef = useRef<CanvasViewportHandle>(null)
   const textInputRef = useRef<HTMLInputElement>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
-  const saveStatus = useAutosave(store)
+  const saveStatus = useAutosave(store, storageOk)
 
   const announcer = useMemo(() => new Announcer(), [])
   const announce = announcer.announce

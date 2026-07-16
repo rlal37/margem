@@ -17,12 +17,22 @@ export type SaveStatus = 'saved' | 'saving' | 'error'
 
 const DEBOUNCE_MS = 800
 
-export function useAutosave(store: EditorStore): SaveStatus {
-  const [status, setStatus] = useState<SaveStatus>('saved')
+/**
+ * `enabled = false` sinaliza armazenamento degradado (ex.: a imagem-base não
+ * pôde ser guardada no IndexedDB). Nesse caso o autosave não grava nada — para
+ * não criar uma sessão "recuperável" sem imagem — e reporta `error`, levando a
+ * interface a recomendar baixar uma cópia (CA-15).
+ */
+export function useAutosave(store: EditorStore, enabled = true): SaveStatus {
+  const [status, setStatus] = useState<SaveStatus>(enabled ? 'saved' : 'error')
   // O projeto inicial já foi gravado ao importar/recuperar.
   const lastSaved = useRef<Project>(store.getSnapshot().project)
 
   useEffect(() => {
+    if (!enabled) {
+      setStatus('error')
+      return
+    }
     let timer: ReturnType<typeof setTimeout> | undefined
 
     async function persist(project: Project) {
@@ -62,7 +72,7 @@ export function useAutosave(store: EditorStore): SaveStatus {
       window.removeEventListener('pagehide', flush)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [store])
+  }, [store, enabled])
 
   return status
 }
