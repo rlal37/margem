@@ -1,7 +1,8 @@
 /**
  * Barra vertical de ferramentas (Apêndice B: ToolRail; seção 6.3). Cada
- * ferramenta é um botão com ícone; o nome acessível vem do `aria-label` e o
- * atalho aparece no `title` (o ícone é decorativo).
+ * ferramenta é um botão com ícone e rótulo; o `title` traz um resumo do que a
+ * ferramenta faz e o atalho (o ícone é decorativo, o nome acessível vem do
+ * texto).
  */
 
 import type { ComponentType } from 'react'
@@ -28,6 +29,17 @@ const TOOL_ICONS: Record<ToolId, ComponentType<{ size?: number }>> = {
   pan: IconPan,
 }
 
+/** Resumo do que cada ferramenta faz (usado no tooltip). */
+const TOOL_DESCRIPTIONS: Record<ToolId, string> = {
+  select: 'Selecionar, mover e editar objetos',
+  marker: 'Ponto numerado — cria um comentário vinculado',
+  area: 'Destacar uma região retangular',
+  arrow: 'Desenhar uma seta para apontar algo',
+  draw: 'Desenhar à mão livre',
+  text: 'Escrever um texto sobre a imagem',
+  pan: 'Arrastar para mover a área de trabalho',
+}
+
 interface ToolRailProps {
   activeTool: ToolId
   onSelect(tool: ToolId): void
@@ -44,11 +56,11 @@ export function ToolRail({ activeTool, onSelect }: ToolRailProps) {
             type="button"
             className="tool-rail__button"
             aria-pressed={activeTool === tool.id}
-            aria-label={tool.label}
-            title={`${tool.label} (${tool.shortcut})`}
+            title={`${TOOL_DESCRIPTIONS[tool.id]} (${tool.shortcut})`}
             onClick={() => onSelect(tool.id)}
           >
-            <Icon size={22} />
+            <Icon size={20} />
+            <span className="tool-rail__label">{tool.label}</span>
           </button>
         )
       })}

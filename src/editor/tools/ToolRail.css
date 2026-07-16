@@ -3,22 +3,33 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.5rem;
+  width: 12rem;
   border-right: 1px solid rgba(0, 0, 0, 0.12);
   flex: 0 0 auto;
 }
 
 .tool-rail__button {
-  width: 2.5rem;
-  height: 2.5rem;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
   border: 1px solid transparent;
   border-radius: 0.5rem;
   background: transparent;
   cursor: pointer;
   color: inherit;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.tool-rail__button svg {
+  flex: 0 0 auto;
+  opacity: 0.9;
+}
+
+.tool-rail__label {
+  white-space: nowrap;
 }
 
 .tool-rail__button:hover {

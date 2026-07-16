@@ -245,7 +245,7 @@ function App() {
       >
         <div className="empty-state__card">
           <div className="empty-state__brand">
-            <Logo size={52} className="empty-state__logo" />
+            <Logo size={68} className="empty-state__logo" />
             <span className="empty-state__wordmark">Margem</span>
           </div>
           <h1 className="empty-state__title">
