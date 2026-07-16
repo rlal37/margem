@@ -234,6 +234,14 @@ export const CanvasViewport = forwardRef<
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return
+
+    // A ferramenta Texto abre um campo inline que precisa ficar focado. O
+    // container é focável (role="application", para navegação por teclado), e o
+    // foco padrão do clique roubaria o foco do campo, fechando-o no ato. Evitar
+    // esse foco padrão apenas para a ferramenta Texto (as demais mantêm o foco
+    // no canvas para o movimento por setas).
+    if (activeTool === 'text') event.preventDefault()
+
     event.currentTarget.setPointerCapture(event.pointerId)
 
     if (activeTool === 'pan' || spacePan) {

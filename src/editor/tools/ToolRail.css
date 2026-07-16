@@ -8,6 +8,51 @@
   flex: 0 0 auto;
 }
 
+.tool-rail--collapsed {
+  width: auto;
+}
+
+.tool-rail__toggle {
+  align-self: flex-end;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.tool-rail__toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+  opacity: 1;
+}
+
+.tool-rail__toggle:focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: 2px;
+}
+
+.tool-rail--collapsed .tool-rail__toggle {
+  align-self: center;
+}
+
+.tool-rail--collapsed .tool-rail__toggle svg {
+  transform: rotate(180deg);
+}
+
+.tool-rail--collapsed .tool-rail__button {
+  justify-content: center;
+}
+
+.tool-rail--collapsed .tool-rail__label {
+  display: none;
+}
+
 .tool-rail__button {
   display: flex;
   align-items: center;
@@ -51,7 +96,8 @@
     border-right-color: rgba(255, 255, 255, 0.15);
   }
 
-  .tool-rail__button:hover {
+  .tool-rail__button:hover,
+  .tool-rail__toggle:hover {
     background: rgba(255, 255, 255, 0.1);
   }
 }

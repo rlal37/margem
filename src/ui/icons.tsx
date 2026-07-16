@@ -204,6 +204,14 @@ export function IconAbout(props: IconProps) {
   )
 }
 
+export function IconChevronLeft(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M15 6l-6 6 6 6" />
+    </Base>
+  )
+}
+
 /* --- Marca --- */
 
 export function Logo(props: IconProps) {
