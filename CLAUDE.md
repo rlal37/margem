@@ -78,7 +78,10 @@ build + e2e (Chromium); deploy automático no push.
 **WP-11 — feito (engenharia/QA automatizável):** e2e do CA-14 (atalho não
 dispara em campo), limites de arquivo e erros conhecidos no README, correção do
 CA-15 (falha de gravação da imagem não é mais silenciosa — `storageOk`/
-`useAutosave(enabled)`). **Cross-browser:** e2e só no Chromium é o gate
+`useAutosave(enabled)`), e e2e das garantias centrais: privacidade (nenhuma
+requisição externa no fluxo), limpar dados (RF-055, some após reload) e
+fidelidade do PNG ao tamanho original em qualquer zoom (RF-060, compara IHDR).
+**Cross-browser:** e2e só no Chromium é o gate
 confiável — Firefox não lança neste ambiente e o WebKit do Playwright não grava
 Blob no IndexedDB (limitação de infra, não bug do Safari real; provado por
 round-trip cru). **Resta (gate humano):** teste com 5 pessoas, leitor de tela
