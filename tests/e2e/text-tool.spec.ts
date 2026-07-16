@@ -16,8 +16,11 @@ test('ferramenta Texto: clicar, digitar e criar a anotação', async ({
   const box = await canvas.boundingBox()
   if (!box) throw new Error('canvas sem bounding box')
 
+  const cx = box.x + box.width / 2
+  const cy = box.y + box.height / 2
+
   await page.getByRole('button', { name: 'Texto', exact: true }).click()
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.click(cx, cy)
 
   const input = page.getByLabel('Texto da anotação')
   await expect(input).toBeVisible()
@@ -28,6 +31,15 @@ test('ferramenta Texto: clicar, digitar e criar a anotação', async ({
   const layer = page.locator('[data-testid="annotation-layer"]').first()
   await expect(layer.getByText('Olá margem')).toBeVisible()
   await expect(page.getByRole('button', { name: /^Texto,/ })).toBeVisible()
+
+  // A seleção acompanha o texto: clicar sobre o corpo (não só a âncora)
+  // seleciona — antes a caixa era um ponto minúsculo, difícil de acertar.
+  const overlay = page.locator('[data-testid="selection-overlay"]')
+  await page.keyboard.press('Escape')
+  await expect(overlay).toHaveCount(0)
+  await page.getByRole('button', { name: 'Selecionar', exact: true }).click()
+  await page.mouse.click(cx + 40, cy + 8)
+  await expect(overlay).toBeVisible()
 })
 
 test('barra de ferramentas é colapsável e mantém as ferramentas acessíveis', async ({

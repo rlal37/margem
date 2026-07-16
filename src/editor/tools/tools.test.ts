@@ -4,6 +4,7 @@ import {
   createArrow,
   createDraw,
   createMarker,
+  createText,
 } from '../../domain/factories'
 import type { PixelSize } from '../../domain/geometry'
 import {
@@ -12,6 +13,7 @@ import {
   hitTest,
   isArrowDragValid,
   moveAnnotation,
+  textBoxPx,
 } from './tools'
 
 const size: PixelSize = { width: 1000, height: 1000 }
@@ -97,12 +99,60 @@ describe('annotationExtent', () => {
   })
 })
 
+describe('textBoxPx', () => {
+  it('dimensiona a caixa pelo conteúdo e tamanho da fonte', () => {
+    const text = createText({ x: 0.1, y: 0.1 }, 'abcd', {
+      id: 't',
+      fontSize: 20,
+      align: 'left',
+    })
+    const box = textBoxPx(text, size)
+    expect(box.x).toBeCloseTo(100)
+    expect(box.y).toBeCloseTo(100)
+    expect(box.width).toBeGreaterThan(30) // ~4 * 20 * 0.56
+    expect(box.height).toBeCloseTo(24) // 1 linha * 20 * 1.2
+  })
+
+  it('desloca a caixa conforme o alinhamento', () => {
+    const base = { x: 0.1, y: 0.1 } as const
+    const opts = { fontSize: 20 } as const
+    const left = textBoxPx(
+      createText(base, 'abcd', { ...opts, align: 'left' }),
+      size,
+    )
+    const center = textBoxPx(
+      createText(base, 'abcd', { ...opts, align: 'center' }),
+      size,
+    )
+    const right = textBoxPx(
+      createText(base, 'abcd', { ...opts, align: 'right' }),
+      size,
+    )
+    expect(center.x).toBeCloseTo(left.x - left.width / 2)
+    expect(right.x).toBeCloseTo(left.x - left.width)
+  })
+})
+
 describe('hitTest', () => {
   const marker = createMarker({ x: 0.5, y: 0.5 }, { id: 'm', zIndex: 0 })
   const area = createArea(
     { x: 0.1, y: 0.1, width: 0.2, height: 0.2 },
     { id: 'a', zIndex: 1 },
   )
+  const text = createText({ x: 0.1, y: 0.1 }, 'abcdefghij', {
+    id: 't',
+    fontSize: 20,
+    align: 'left',
+  })
+
+  it('acerta o texto sobre a caixa, não só na âncora', () => {
+    // Ponto no meio do texto (âncora em 100,100; caixa ~112px de largura).
+    expect(hitTest([text], { x: 160, y: 110 }, size, 5)).toBe('t')
+  })
+
+  it('erra o texto bem longe da caixa', () => {
+    expect(hitTest([text], { x: 400, y: 400 }, size, 5)).toBeNull()
+  })
 
   it('acerta o marcador perto do ponto', () => {
     expect(hitTest([marker], { x: 505, y: 505 }, size, 10)).toBe('m')

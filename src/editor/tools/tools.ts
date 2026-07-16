@@ -6,7 +6,7 @@
 
 import { clamp01, rectFromPoints } from '../../domain/geometry'
 import type { NormalizedPoint, PixelSize } from '../../domain/geometry'
-import type { Annotation, ToolId } from '../../domain/types'
+import type { Annotation, TextAnnotation, ToolId } from '../../domain/types'
 
 export interface ToolMeta {
   id: ToolId
@@ -28,6 +28,39 @@ export const TOOLS: readonly ToolMeta[] = [
 
 /** Arraste mínimo (em fração da imagem) para valer como área/seta. */
 export const MIN_DRAG = 0.005
+
+/**
+ * Largura média de caractere e entrelinha (fração do tamanho da fonte). São
+ * estimativas para dimensionar a caixa de um texto sem medir no DOM — usadas
+ * na seleção e no clique, onde uma caixa levemente generosa é preferível a uma
+ * minúscula (difícil de acertar).
+ */
+const TEXT_AVG_CHAR_WIDTH = 0.56
+const TEXT_LINE_HEIGHT = 1.2
+
+/**
+ * Caixa aproximada de um texto em pixels da imagem, considerando conteúdo,
+ * tamanho da fonte e alinhamento (a âncora fica no topo — `hanging`).
+ */
+export function textBoxPx(
+  annotation: TextAnnotation,
+  size: PixelSize,
+): { x: number; y: number; width: number; height: number } {
+  const lines = annotation.text.split('\n')
+  const fontPx = annotation.style.fontSize
+  const cols = Math.max(1, ...lines.map((line) => line.length))
+  const width = cols * fontPx * TEXT_AVG_CHAR_WIDTH
+  const height = lines.length * fontPx * TEXT_LINE_HEIGHT
+  const anchorX = annotation.geometry.point.x * size.width
+  const anchorY = annotation.geometry.point.y * size.height
+  const x =
+    annotation.style.align === 'center'
+      ? anchorX - width / 2
+      : annotation.style.align === 'right'
+        ? anchorX - width
+        : anchorX
+  return { x, y: anchorY, width, height }
+}
 
 function distance(a: NormalizedPoint, b: NormalizedPoint): number {
   return Math.hypot(a.x - b.x, a.y - b.y)
@@ -202,12 +235,21 @@ function isHit(
   pickRadius: number,
 ): boolean {
   switch (annotation.type) {
-    case 'marker':
-    case 'text': {
+    case 'marker': {
       const anchor = annotation.geometry.point
       const dx = pointNorm.x * size.width - anchor.x * size.width
       const dy = pointNorm.y * size.height - anchor.y * size.height
       return Math.hypot(dx, dy) <= pickRadius
+    }
+    case 'text': {
+      // Clique sobre a caixa do texto (não só o ponto de âncora), com folga.
+      const box = textBoxPx(annotation, size)
+      return (
+        imagePoint.x >= box.x - pickRadius &&
+        imagePoint.x <= box.x + box.width + pickRadius &&
+        imagePoint.y >= box.y - pickRadius &&
+        imagePoint.y <= box.y + box.height + pickRadius
+      )
     }
     case 'area': {
       const r = annotation.geometry.rect

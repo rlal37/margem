@@ -6,7 +6,7 @@
 
 import type { PixelSize } from '../../domain/geometry'
 import type { Annotation } from '../../domain/types'
-import { annotationExtent } from '../tools/tools'
+import { annotationExtent, textBoxPx } from '../tools/tools'
 
 interface SelectionOverlayProps {
   annotation: Annotation
@@ -25,13 +25,27 @@ export function SelectionOverlay({
   zoom,
 }: SelectionOverlayProps) {
   const size: PixelSize = { width: imageWidth, height: imageHeight }
-  const extent = annotationExtent(annotation)
   const pad = PADDING_PX / zoom
 
-  const x = extent.minX * size.width - pad
-  const y = extent.minY * size.height - pad
-  const width = (extent.maxX - extent.minX) * size.width + pad * 2
-  const height = (extent.maxY - extent.minY) * size.height + pad * 2
+  // O texto tem largura/altura reais (não é um ponto): a caixa acompanha o
+  // conteúdo para a seleção ser visível e fácil de acertar.
+  const box =
+    annotation.type === 'text'
+      ? textBoxPx(annotation, size)
+      : (() => {
+          const extent = annotationExtent(annotation)
+          return {
+            x: extent.minX * size.width,
+            y: extent.minY * size.height,
+            width: (extent.maxX - extent.minX) * size.width,
+            height: (extent.maxY - extent.minY) * size.height,
+          }
+        })()
+
+  const x = box.x - pad
+  const y = box.y - pad
+  const width = box.width + pad * 2
+  const height = box.height + pad * 2
 
   return (
     <rect
