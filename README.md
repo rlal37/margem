@@ -59,6 +59,17 @@ Uma imagem por projeto (PNG, JPEG ou WebP); sem colaboração, contas, múltipla
 páginas, PDF, integrações externas ou IA. Esses itens são backlog posterior,
 não deste MVP.
 
+**Limites de arquivo:** até 25 MB e 12000 px por lado. Acima disso, a imagem é
+recusada com uma mensagem acionável e a tela anterior é preservada. Arquivos em
+formato não suportado ou corrompidos também são recusados sem perder o trabalho
+em andamento.
+
+**Erros conhecidos:** navegadores muito antigos sem `createImageBitmap` ou
+IndexedDB podem não abrir ou não salvar automaticamente (o projeto segue em
+memória e é possível baixar uma cópia). Redimensionar/rotacionar objetos e
+seleção múltipla ainda não existem — mova pelo arraste ou pela posição numérica
+no painel de propriedades.
+
 ## Licença
 
 [MIT](LICENSE).
